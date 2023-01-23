@@ -3,7 +3,7 @@
 # 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022
 # Python Software Foundation; All Rights Reserved
 
-# This file is part of python-isal which is distributed under the
+# This file is part of python-zlib-ng which is distributed under the
 # PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2.
 
 import functools
@@ -131,8 +131,8 @@ setup(
     package_data={'zlib_ng': ['*.pyi', 'py.typed',
                            # Include zlib-ng LICENSE and other relevant files
                            # with the binary distribution.
-                           'zlib-ng/LICENSE', 'zlib-ng/README.md']},
-    url="https://github.com/pycompression/python-isal",
+                           'zlib-ng/LICENSE.md', 'zlib-ng/README.md']},
+    url="https://github.com/pycompression/python-zlib-ng",
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3",
