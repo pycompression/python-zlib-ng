@@ -38,11 +38,11 @@ def decompress(__data,
                wbits: int = MAX_WBITS,
                bufsize: int = DEF_BUF_SIZE) -> bytes: ...
 
-class Compress:
+class _Compress:
     def compress(self, __data) -> bytes: ...
     def flush(self, mode: int = Z_FINISH) -> bytes: ...
 
-class Decompress:
+class _Decompress:
     unused_data: bytes
     unconsumed_tail: bytes
     eof: bool
@@ -55,6 +55,17 @@ def compressobj(level: int = Z_DEFAULT_COMPRESSION,
                 wbits: int = MAX_WBITS,
                 memLevel: int = DEF_MEM_LEVEL,
                 strategy: int = Z_DEFAULT_STRATEGY,
-                zdict = None) -> Compress: ...
+                zdict = None) -> _Compress: ...
 
-def decompressobj(wbits: int = MAX_WBITS, zdict = None) -> Decompress: ...
+def decompressobj(wbits: int = MAX_WBITS, zdict = None) -> _Decompress: ...
+
+class _ZlibDecompressor:
+    unused_data: bytes
+    needs_input: bool
+    eof: bool
+
+    def __init__(self,
+                 wbits=MAX_WBITS,
+                 zdict=None): ...
+
+    def decompress(self, __data, max_length=-1) -> bytes: ...
