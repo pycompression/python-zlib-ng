@@ -32,7 +32,7 @@ BUILD_CACHE_FILE = Path(os.environ.get("PYTHON_ZLIB_NG_BUILD_CACHE_FILE",
                                        DEFAULT_CACHE_FILE))
 
 EXTENSIONS = [
-        Extension("zlib_ng", ["src/zlib_ng/zlib_ngmodule.c"]),
+        Extension("zlib_ng.zlib_ng", ["src/zlib_ng/zlib_ngmodule.c"]),
     ]
 
 
