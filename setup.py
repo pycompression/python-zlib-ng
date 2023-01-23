@@ -129,10 +129,9 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'},
     package_data={'zlib_ng': ['*.pyi', 'py.typed',
-                           # Include isa-l LICENSE and other relevant files
+                           # Include zlib-ng LICENSE and other relevant files
                            # with the binary distribution.
-                           'isa-l/LICENSE', 'isa-l/README.md',
-                           'isa-l/Release_notes.txt']},
+                           'zlib-ng/LICENSE', 'zlib-ng/README.md']},
     url="https://github.com/pycompression/python-isal",
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",
