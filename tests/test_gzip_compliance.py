@@ -32,10 +32,6 @@ from test.support.script_helper import assert_python_ok, assert_python_failure
 
 from zlib_ng import gzip_ng as gzip
 
-TESTFN_ASCII = '@test'
-TESTFN = TESTFN_ASCII
-
-
 data1 = b"""  int length=DEFAULTALLOC, err = Z_OK;
   PyObject *RetVal;
   int flushmode = Z_FINISH;
@@ -64,7 +60,10 @@ class UnseekableIO(io.BytesIO):
 
 
 class BaseTest(unittest.TestCase):
-    filename = TESTFN
+    def __init__(self, methodName):
+        fileno, self.filename = tempfile.mkstemp()
+        os.close(fileno)
+        super().__init__(methodName)
 
     def setUp(self):
         os.unlink(self.filename)
@@ -385,7 +384,8 @@ class TestGzip(BaseTest):
             self.assertEqual(isizeBytes, struct.pack('<i', len(data1)))
 
     def test_metadata_ascii_name(self):
-        self.filename = TESTFN_ASCII
+        fd, self.filename = tempfile.mkstemp()
+        os.close(fd)
         self.test_metadata()
 
     def test_compresslevel_metadata(self):
