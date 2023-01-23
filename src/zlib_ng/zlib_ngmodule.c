@@ -1607,69 +1607,119 @@ static PyMemberDef ZlibDecompressor_members[] = {
 };
 
 
-/*[clinic input]
-zlib.adler32
+PyDoc_STRVAR(zlib_adler32__doc__,
+"adler32($module, data, value=1, /)\n"
+"--\n"
+"\n"
+"Compute an Adler-32 checksum of data.\n"
+"\n"
+"  value\n"
+"    Starting value of the checksum.\n"
+"\n"
+"The returned checksum is an integer.");
 
-    data: Py_buffer
-    value: unsigned_int(bitwise=True) = 1
-        Starting value of the checksum.
-    /
-
-Compute an Adler-32 checksum of data.
-
-The returned checksum is an integer.
-[clinic start generated code]*/
+#define ZLIB_ADLER32_METHODDEF    \
+    {"adler32", (PyCFunction)(void(*)(void))zlib_adler32, METH_FASTCALL, \
+     isal_zlib_adler32__doc__}
 
 static PyObject *
-zlib_adler32_impl(PyObject *module, Py_buffer *data, uint32_t value)
-/*[clinic end generated code: output=422106f5ca8c92c0 input=6ff4557872160e88]*/
+zlib_adler32(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 {
-    Py_ssize_t len = data->len ;
-    uint8_t *buf = data->buf;
+    PyObject *return_value = NULL;
+    Py_buffer data = {NULL, NULL};
+    uint32_t value = 1;
+    Py_ssize_t len = data.len ;
+    uint8_t *buf = data.buf;
+
+    if (nargs < 1 || nargs > 2) {
+        PyErr_Format(
+            PyExc_TypeError, 
+            "adler32 takes exactly 1 or 2 arguments, got %d", 
+            nargs);
+        return NULL;
+    }
+    if (PyObject_GetBuffer(args[0], &data, PyBUF_SIMPLE) != 0) {
+        return NULL;
+    }
+    if (nargs > 1) {
+        value = (uint32_t)PyLong_AsUnsignedLongMask(args[1]);
+        if (value == (uint32_t)-1 && PyErr_Occurred()) {
+            PyBuffer_Release(&data);
+            return NULL;
+        }
+    }
+
     while ((size_t)len > UINT32_MAX) {
         value = zng_adler32(value, buf, UINT32_MAX);
         buf += (size_t) UINT32_MAX;
         len -= (size_t) UINT32_MAX;
     }
     value = zng_adler32(value, buf, (unsigned int)len);
-    return PyLong_FromUnsignedLong(value & 0xffffffffU);
+    return_value = PyLong_FromUnsignedLong(value & 0xffffffffU);
+    PyBuffer_Release(&data);
+    return return_value;
 }
 
-/*[clinic input]
-zlib.crc32 -> unsigned_int
+PyDoc_STRVAR(zlib_crc32__doc__,
+"crc32($module, data, value=0, /)\n"
+"--\n"
+"\n"
+"Compute a CRC-32 checksum of data.\n"
+"\n"
+"  value\n"
+"    Starting value of the checksum.\n"
+"\n"
+"The returned checksum is an integer.");
 
-    data: Py_buffer
-    value: unsigned_int(bitwise=True) = 0
-        Starting value of the checksum.
-    /
-
-Compute a CRC-32 checksum of data.
-
-The returned checksum is an integer.
-[clinic start generated code]*/
+#define ZLIB_CRC32_METHODDEF    \
+    {"crc32", (PyCFunction)(void(*)(void))zlib_crc32, METH_FASTCALL, \
+     zlib_crc32__doc__}
 
 static unsigned int
-zlib_crc32_impl(PyObject *module, Py_buffer *data, unsigned int value)
-/*[clinic end generated code: output=b217562e4fe6d6a6 input=1229cb2fb5ea948a]*/
+zlib_crc32(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 {
-    Py_ssize_t len = data->len ;
-    uint8_t *buf = data->buf;
+    PyObject *return_value = NULL;
+    Py_buffer data = {NULL, NULL};
+    uint32_t value = 0;
+
+    if (nargs < 1 || nargs > 2) {
+        PyErr_Format(
+            PyExc_TypeError, 
+            "crc32 takes exactly 1 or 2 arguments, got %d", 
+            nargs);
+        return NULL;
+    }
+    if (PyObject_GetBuffer(args[0], &data, PyBUF_SIMPLE) != 0) {
+        return NULL;
+    }
+    if (nargs > 1) {
+        value = (uint32_t)PyLong_AsUnsignedLongMask(args[1]);
+        if (value == (uint32_t)-1 && PyErr_Occurred()) {
+            PyBuffer_Release(&data);
+            return NULL;
+        }
+    }
+
+    Py_ssize_t len = data.len ;
+    uint8_t *buf = data.buf;
     while ((size_t)len > UINT32_MAX) {
         value = zng_crc32(value, buf, UINT32_MAX);
         buf += (size_t) UINT32_MAX;
         len -= (size_t) UINT32_MAX;
     }
     value = zng_crc32(value, buf, (unsigned int)len);
-    return PyLong_FromUnsignedLong(value & 0xffffffffU);
+    return_value = PyLong_FromUnsignedLong(value & 0xffffffffU);
+    PyBuffer_Release(&data);
+    return return_value;
 }
 
 
 static PyMethodDef zlib_methods[] =
 {
-    ZLIB_ADLER32_METHODDEF
+    ZLIB_ADLER32_METHODDEF,
     ZLIB_COMPRESS_METHODDEF
     ZLIB_COMPRESSOBJ_METHODDEF
-    ZLIB_CRC32_METHODDEF
+    ZLIB_CRC32_METHODDEF,
     ZLIB_DECOMPRESS_METHODDEF
     ZLIB_DECOMPRESSOBJ_METHODDEF
     {NULL, NULL}
