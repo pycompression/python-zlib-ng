@@ -1285,39 +1285,49 @@ error:
     return NULL;
 }
 
-/*[clinic input]
-zlib.ZlibDecompressor.decompress
+PyDoc_STRVAR(zlib_ZlibDecompressor_decompress__doc__,
+"decompress($self, /, data, max_length=-1)\n"
+"--\n"
+"\n"
+"Decompress *data*, returning uncompressed data as bytes.\n"
+"\n"
+"If *max_length* is nonnegative, returns at most *max_length* bytes of\n"
+"decompressed data. If this limit is reached and further output can be\n"
+"produced, *self.needs_input* will be set to ``False``. In this case, the next\n"
+"call to *decompress()* may provide *data* as b\'\' to obtain more of the output.\n"
+"\n"
+"If all of the input data was decompressed and returned (either because this\n"
+"was less than *max_length* bytes, or because *max_length* was negative),\n"
+"*self.needs_input* will be set to True.\n"
+"\n"
+"Attempting to decompress data after the end of stream is reached raises an\n"
+"EOFError.  Any data found after the end of the stream is ignored and saved in\n"
+"the unused_data attribute.");
 
-    data: Py_buffer
-    max_length: Py_ssize_t=-1
-
-Decompress *data*, returning uncompressed data as bytes.
-
-If *max_length* is nonnegative, returns at most *max_length* bytes of
-decompressed data. If this limit is reached and further output can be
-produced, *self.needs_input* will be set to ``False``. In this case, the next
-call to *decompress()* may provide *data* as b'' to obtain more of the output.
-
-If all of the input data was decompressed and returned (either because this
-was less than *max_length* bytes, or because *max_length* was negative),
-*self.needs_input* will be set to True.
-
-Attempting to decompress data after the end of stream is reached raises an
-EOFError.  Any data found after the end of the stream is ignored and saved in
-the unused_data attribute. */
+#define ZLIB_ZLIBDECOMPRESSOR_DECOMPRESS_METHODDEF    \
+    {"decompress", (PyCFunction)(void(*)(void))zlib_ZlibDecompressor_decompress, \
+     METH_VARARGS|METH_KEYWORDS, zlib_ZlibDecompressor_decompress__doc__}
 
 static PyObject *
-zlib_ZlibDecompressor_decompress_impl(ZlibDecompressor *self,
-                                      Py_buffer *data, Py_ssize_t max_length)
+zlib_ZlibDecompressor_decompress(ZlibDecompressor *self, PyObject *args, PyObject *kwargs)
 {
+    static char *keywords[] = {"", "max_length", NULL};
+    static char *format = "y*|n:decompress";
+
     PyObject *result = NULL;
+    Py_buffer data = {NULL, NULL};
+    Py_ssize_t max_length = 0;
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwargs, format, keywords, &data, &max_length)) {
+        return NULL;
+    }
 
     ENTER_ZLIB(self);
     if (self->eof) {
         PyErr_SetString(PyExc_EOFError, "End of stream already reached");
     }
     else {
-        result = decompress(self, data->buf, data->len, max_length);
+        result = decompress(self, data.buf, data.len, max_length);
     }
     LEAVE_ZLIB(self);
     return result;
