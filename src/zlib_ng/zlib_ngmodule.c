@@ -784,8 +784,14 @@ PyDoc_STRVAR(zlib_Compress_copy__doc__,
 static PyObject *
 zlib_Compress_copy(compobject *self, PyObject *Py_UNUSED(ignored))
 {
+    
     compobject *return_value = newcompobject(&Comptype);
     if (!return_value) return NULL;
+
+    if (!self->is_initialised) {
+        PyErr_SetString(PyExc_ValueError, "Cannot copy flushed objects.");
+        goto error;
+    }
 
     /* Copy the zstream state
      * We use ENTER_ZLIB / LEAVE_ZLIB to make this thread-safe

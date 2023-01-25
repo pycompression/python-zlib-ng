@@ -170,6 +170,8 @@ class ExceptionTestCase(unittest.TestCase):
             zlib.decompressobj().flush(sys.maxsize + 1)
 
     @support.cpython_only
+    @unittest.skipIf(not hasattr(support, "check_disallow_instantiation"),
+                     "Instantiation check not available in support in some versions.")
     def test_disallow_instantiation(self):
         # Ensure that the type disallows instantiation (bpo-43916)
         support.check_disallow_instantiation(self, type(zlib.compressobj()))
