@@ -101,6 +101,7 @@ def build_zlib_ng():
     # Build environment is a copy of OS environment to allow user to influence
     # it.
     build_env = os.environ.copy()
+    build_env["CFLAGS"] = build_env.get("CFLAGS", "") + " -fPIC"
     # Add -fPIC flag to allow static compilation
     run_args = dict(cwd=build_dir, env=build_env)
     subprocess.run(["cmake", build_dir], **run_args)
