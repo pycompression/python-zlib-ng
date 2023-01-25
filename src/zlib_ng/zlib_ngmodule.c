@@ -685,7 +685,7 @@ Call the flush() method to clear these buffers.
 [clinic start generated code]*/
 
 static PyObject *
-zlib_Decompress_decompress_impl(compobject *self, PyTypeObject *cls,
+zlib_Decompress_decompress_impl(compobject *self,
                                 Py_buffer *data, Py_ssize_t max_length)
 /*[clinic end generated code: output=b024a93c2c922d57 input=bfb37b3864cfb606]*/
 {
@@ -694,10 +694,6 @@ zlib_Decompress_decompress_impl(compobject *self, PyTypeObject *cls,
     Py_ssize_t obuflen = DEF_BUF_SIZE;
     PyObject *return_value = NULL;
     Py_ssize_t hard_limit;
-
-    PyObject *module = PyType_GetModule(cls);
-    if (module == NULL)
-        return NULL;
 
     if (max_length < 0) {
         PyErr_SetString(PyExc_ValueError, "max_length must be non-negative");
@@ -800,7 +796,7 @@ Return a bytes object containing any remaining compressed data.
 [clinic start generated code]*/
 
 static PyObject *
-zlib_Compress_flush_impl(compobject *self, PyTypeObject *cls, int mode)
+zlib_Compress_flush_impl(compobject *self, int mode)
 /*[clinic end generated code: output=c7efd13efd62add2 input=286146e29442eb6c]*/
 {
     int err;
@@ -1041,7 +1037,7 @@ Return a bytes object containing any remaining decompressed data.
 [clinic start generated code]*/
 
 static PyObject *
-zlib_Decompress_flush_impl(compobject *self, PyTypeObject *cls,
+zlib_Decompress_flush_impl(compobject *self,
                            Py_ssize_t length)
 /*[clinic end generated code: output=4532fc280bd0f8f2 input=42f1f4b75230e2cd]*/
 {
@@ -1049,11 +1045,6 @@ zlib_Decompress_flush_impl(compobject *self, PyTypeObject *cls,
     Py_buffer data;
     PyObject *return_value = NULL;
     Py_ssize_t ibuflen;
-
-    PyObject *module = PyType_GetModule(cls);
-    if (module == NULL) {
-        return NULL;
-    }
 
     if (length <= 0) {
         PyErr_SetString(PyExc_ValueError, "length must be greater than zero");
@@ -2098,8 +2089,7 @@ zlib_exec(PyObject *mod)
         return -1;
     }
 
-    ZlibDecompressorType = (PyTypeObject *)PyType_FromSpec(
-        mod, &ZlibDecompressor_type_spec, NULL);
+    ZlibDecompressorType = (PyTypeObject *)PyType_FromSpec(&ZlibDecompressor_type_spec);
     if (ZlibDecompressorType == NULL) {
         return -1;
     }
@@ -2191,9 +2181,6 @@ static struct PyModuleDef zlibmodule = {
     .m_doc = zlib_module_documentation,
     .m_methods = zlib_methods,
     .m_slots = zlib_slots,
-    .m_traverse = zlib_traverse,
-    .m_clear = zlib_clear,
-    .m_free = zlib_free,
 };
 
 PyMODINIT_FUNC
