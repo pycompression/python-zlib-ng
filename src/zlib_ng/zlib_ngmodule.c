@@ -2029,6 +2029,13 @@ PyInit_zlib_ng(void)
     if (ver != NULL)
         PyModule_AddObject(m, "ZLIBNG_RUNTIME_VERSION", ver);
 
+    /* Add latest compatible zlib version */
+    ver = PyUnicode_FromString("1.2.12");
+    if (ver!= NULL) {
+        PyModule_AddObject(m, "ZLIB_VERSION", ver);
+        PyModule_AddObject(m, "ZLIB_RUNTIME_VERSION", ver);
+    }
+
     PyModule_AddStringConstant(m, "__version__", "1.0");
 
     return m;

@@ -185,7 +185,7 @@ class _GzipNGReader(gzip._GzipReader):
         # It is not very invasive and allows us to override _PaddedFile
         _compression.DecompressReader.__init__(
             self, gzip._PaddedFile(fp), zlib_ng._ZlibDecompressor,
-            hist_bits=-zlib_ng.MAX_WBITS)
+            wbits=-zlib_ng.MAX_WBITS)
         # Set flag indicating start of a new member
         self._new_member = True
         self._last_mtime = None
