@@ -796,7 +796,7 @@ zlib_Decompress_decompress_impl(compobject *self, PyTypeObject *cls,
     }
 
     if (_PyBytes_Resize(&return_value, self->zst.next_out -
-                        (Byte *)PyBytes_AS_STRING(return_value)) == 0) {
+                        (uint8_t *)PyBytes_AS_STRING(return_value)) == 0) {
         goto success;
     }
  abort:
@@ -1148,7 +1148,7 @@ zlib_Decompress_flush_impl(compobject *self, PyTypeObject *cls,
     }
 
     if (_PyBytes_Resize(&return_value, self->zst.next_out -
-                        (Byte *)PyBytes_AS_STRING(return_value)) == 0) {
+                        (uint8_t *)PyBytes_AS_STRING(return_value)) == 0) {
         goto success;
     }
  abort:
@@ -1658,7 +1658,7 @@ zlib_adler32(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
         buf += (size_t) UINT32_MAX;
         len -= (size_t) UINT32_MAX;
     }
-    value = zng_adler32(value, buf, (unsigned int)len);
+    value = zng_adler32(value, buf, (uint32_t)len);
     return_value = PyLong_FromUnsignedLong(value & 0xffffffffU);
     PyBuffer_Release(&data);
     return return_value;
@@ -1679,7 +1679,7 @@ PyDoc_STRVAR(zlib_crc32__doc__,
     {"crc32", (PyCFunction)(void(*)(void))zlib_crc32, METH_FASTCALL, \
      zlib_crc32__doc__}
 
-static unsigned int
+static PyObject *
 zlib_crc32(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 {
     PyObject *return_value = NULL;
@@ -1711,7 +1711,7 @@ zlib_crc32(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
         buf += (size_t) UINT32_MAX;
         len -= (size_t) UINT32_MAX;
     }
-    value = zng_crc32(value, buf, (unsigned int)len);
+    value = zng_crc32(value, buf, (uint32_t)len);
     return_value = PyLong_FromUnsignedLong(value & 0xffffffffU);
     PyBuffer_Release(&data);
     return return_value;
