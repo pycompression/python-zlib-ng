@@ -1700,7 +1700,7 @@ PyDoc_STRVAR(zlib_compress__doc__,
 "  wbits\n"
 "    The window buffer size and container format.");
 
-#define zlib_COMPRESS_METHODDEF    \
+#define ZLIB_COMPRESS_METHODDEF    \
     {"compress", (PyCFunction)(void(*)(void))zlib_compress, \
      METH_VARARGS|METH_KEYWORDS, zlib_compress__doc__}
 
@@ -1736,7 +1736,7 @@ PyDoc_STRVAR(zlib_decompress__doc__,
 "  bufsize\n"
 "    The initial output buffer size.");
 
-#define zlib_DECOMPRESS_METHODDEF    \
+#define ZLIB_DECOMPRESS_METHODDEF    \
     {"decompress", (PyCFunction)(void(*)(void))zlib_decompress, \
      METH_VARARGS|METH_KEYWORDS, zlib_decompress__doc__}
 
@@ -1835,7 +1835,7 @@ PyDoc_STRVAR(zlib_decompressobj__doc__,
 "    The predefined compression dictionary.  This must be the same\n"
 "    dictionary as used by the compressor that produced the input data.");
 
-#define zlib_DECOMPRESSOBJ_METHODDEF    \
+#define ZLIB_DECOMPRESSOBJ_METHODDEF    \
     {"decompressobj", (PyCFunction)(void(*)(void))zlib_decompressobj, \
      METH_VARARGS|METH_KEYWORDS, zlib_decompressobj__doc__}
 
@@ -1868,7 +1868,7 @@ PyDoc_STRVAR(zlib_Compress_compress__doc__,
 "be stored in internal buffers for later processing.\n"
 "Call the flush() method to clear these buffers.");
 
-#define zlib_COMPRESS_COMPRESS_METHODDEF    \
+#define ZLIB_COMPRESS_COMPRESS_METHODDEF    \
     {"compress", (PyCFunction)(void(*)(void))zlib_Compress_compress, \
      METH_O, zlib_Compress_compress__doc__}
 
@@ -1902,7 +1902,7 @@ PyDoc_STRVAR(zlib_Decompress_decompress__doc__,
 "internal buffers for later processing.\n"
 "Call the flush() method to clear these buffers.");
 
-#define zlib_DECOMPRESS_DECOMPRESS_METHODDEF    \
+#define ZLIB_DECOMPRESS_DECOMPRESS_METHODDEF    \
     {"decompress", (PyCFunction)(void(*)(void))zlib_Decompress_decompress, \
      METH_VARARGS|METH_KEYWORDS, zlib_Decompress_decompress__doc__}
 
@@ -1937,7 +1937,7 @@ PyDoc_STRVAR(zlib_Compress_flush__doc__,
 "    used after calling the flush() method.  Otherwise, more data\n"
 "    can still be compressed.");
 
-#define zlib_COMPRESS_FLUSH_METHODDEF    \
+#define ZLIB_COMPRESS_FLUSH_METHODDEF    \
     {"flush", (PyCFunction)(void(*)(void))zlib_Compress_flush, \
      METH_FASTCALL|METH_KEYWORDS, zlib_Compress_flush__doc__}
 
@@ -1984,7 +1984,7 @@ PyDoc_STRVAR(zlib_Decompress_flush__doc__,
 "    the initial size of the output buffer.");
 
 
-#define zlib_DECOMPRESS_FLUSH_METHODDEF    \
+#define ZLIB_DECOMPRESS_FLUSH_METHODDEF    \
     {"flush", (PyCFunction)(void(*)(void))zlib_Decompress_flush, \
      METH_FASTCALL, zlib_Decompress_flush__doc__}
 
