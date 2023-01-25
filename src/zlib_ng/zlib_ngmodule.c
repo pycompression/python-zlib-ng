@@ -37,9 +37,9 @@
 static PyModuleDef zlibmodule;
 
 static PyObject *ZlibError;
-static PyTypeObject *Comptype;
-static PyTypeObject *Decomptype;
-static PyTypeObject *ZlibDecompressorType;
+static PyTypeObject Comptype;
+static PyTypeObject Decomptype;
+static PyTypeObject ZlibDecompressorType;
 typedef struct
 {
     PyObject_HEAD
@@ -370,7 +370,7 @@ zlib_compressobj_impl(PyObject *module, int level, int method, int wbits,
         return NULL;
     }
 
-    compobject *self = newcompobject(Comptype);
+    compobject *self = newcompobject(&Comptype);
     if (self == NULL)
         goto error;
     self->zst.opaque = NULL;
@@ -449,7 +449,7 @@ zlib_decompressobj_impl(PyObject *module, int wbits, PyObject *zdict)
         return NULL;
     }
 
-    compobject *self = newcompobject(Decomptype);
+    compobject *self = newcompobject(&Decomptype);
     if (self == NULL)
         return NULL;
     self->zst.opaque = NULL;
@@ -784,7 +784,7 @@ PyDoc_STRVAR(zlib_Compress_copy__doc__,
 static PyObject *
 zlib_Compress_copy(compobject *self, PyObject *Py_UNUSED(ignored))
 {
-    compobject *return_value = newcompobject(Comptype);
+    compobject *return_value = newcompobject(&Comptype);
     if (!return_value) return NULL;
 
     /* Copy the zstream state
@@ -863,7 +863,7 @@ PyDoc_STRVAR(zlib_Decompress_copy__doc__,
 static PyObject *
 zlib_Decompress_copy(compobject *self, PyObject *Py_UNUSED(ignored))
 {
-    compobject *return_value = newcompobject(Decomptype);
+    compobject *return_value = newcompobject(&Decomptype);
     if (!return_value) return NULL;
 
     /* Copy the zstream state
@@ -1902,6 +1902,34 @@ static PyMemberDef ZlibDecompressor_members[] = {
     {NULL},
 };
 
+static PyTypeObject Comptype = {
+    .tp_name = "zlib_ng.Compress",
+    .tp_basicsize = sizeof(compobject),
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_dealloc = Comp_dealloc,
+    .tp_methods = comp_methods,
+};
+
+static PyTypeObject Decomptype = {
+    .tp_name = "zlib_ng.Decompress",
+    .tp_basicsize = sizeof(compobject),
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_dealloc = Decomp_dealloc,
+    .tp_methods = Decomp_methods,
+    .tp_members = Decomp_members,
+};
+
+static PyTypeObject ZlibDecompressorType = {
+    .tp_name = "zlib_ng._ZlibDecompressor",
+    .tp_basicsize = sizeof(ZlibDecompressor),
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_members = ZlibDecompressor_members,
+    .tp_new = ZlibDecompressor__new__,
+    .tp_doc = ZlibDecompressor__new____doc__,
+    .tp_methods = ZlibDecompressor_methods,
+
+};
+
 
 static PyMethodDef zlib_methods[] =
 {
@@ -1914,52 +1942,8 @@ static PyMethodDef zlib_methods[] =
     {NULL, NULL}
 };
 
-static PyType_Slot Comptype_slots[] = {
-    {Py_tp_dealloc, Comp_dealloc},
-    {Py_tp_methods, comp_methods},
-    {0, 0},
-};
 
-static PyType_Spec Comptype_spec = {
-    .name = "zlib.Compress",
-    .basicsize = sizeof(compobject),
-    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_DISALLOW_INSTANTIATION,
-    .slots= Comptype_slots,
-};
 
-static PyType_Slot Decomptype_slots[] = {
-    {Py_tp_dealloc, Decomp_dealloc},
-    {Py_tp_methods, Decomp_methods},
-    {Py_tp_members, Decomp_members},
-    {0, 0},
-};
-
-static PyType_Spec Decomptype_spec = {
-    .name = "zlib.Decompress",
-    .basicsize = sizeof(compobject),
-    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_DISALLOW_INSTANTIATION,
-    .slots = Decomptype_slots,
-};
-
-static PyType_Slot ZlibDecompressor_type_slots[] = {
-    {Py_tp_dealloc, ZlibDecompressor_dealloc},
-    {Py_tp_members, ZlibDecompressor_members},
-    {Py_tp_new, ZlibDecompressor__new__},
-    {Py_tp_doc, (char *)ZlibDecompressor__new____doc__},
-    {Py_tp_methods, ZlibDecompressor_methods},
-    {0, 0},
-};
-
-static PyType_Spec ZlibDecompressor_type_spec = {
-    .name = "zlib._ZlibDecompressor",
-    .basicsize = sizeof(ZlibDecompressor),
-    // Calling PyType_GetModuleState() on a subclass is not safe.
-    // ZlibDecompressor_type_spec does not have Py_TPFLAGS_BASETYPE flag
-    // which prevents to create a subclass.
-    // So calling PyType_GetModuleState() in this file is always safe.
-    .flags = (Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE),
-    .slots = ZlibDecompressor_type_slots,
-};
 PyDoc_STRVAR(zlib_module_documentation,
 "The functions in this module allow compression and decompression using the\n"
 "zlib-ng library, which is a performance enhanced drop-in replacement for zlib.\n"
