@@ -868,17 +868,17 @@ zlib_Compress_flush_impl(compobject *self, PyTypeObject *cls, int mode)
     return return_value;
 }
 
-/*[clinic input]
-zlib.Compress.copy
+PyDoc_STRVAR(zlib_Compress_copy__doc__,
+"copy($self, /)\n"
+"--\n"
+"\n"
+"Return a copy of the compression object.");
 
-    cls: defining_class
-
-Return a copy of the compression object.
-[clinic start generated code]*/
+#define ZLIB_COMPRESS_COPY_METHODDEF    \
+    {"copy", (PyCFunction)zlib_Compress_copy, METH_NOARGS, zlib_Compress_copy__doc__}
 
 static PyObject *
-zlib_Compress_copy_impl(compobject *self, PyTypeObject *cls)
-/*[clinic end generated code: output=c4d2cfb4b0d7350b input=235497e482d40986]*/
+zlib_Compress_copy(compobject *self, PyObject *Py_UNUSED(ignored))
 {
     compobject *return_value = newcompobject(Comptype);
     if (!return_value) return NULL;
@@ -919,48 +919,45 @@ error:
     return NULL;
 }
 
-/*[clinic input]
-zlib.Compress.__copy__
 
-    cls: defining_class
+PyDoc_STRVAR(zlib_Compress___copy____doc__,
+"__copy__($self, /)\n"
+"--\n"
+"\n");
 
-[clinic start generated code]*/
+#define ZLIB_COMPRESS___COPY___METHODDEF    \
+    {"__copy__", (PyCFunction)zlib_Compress___copy__, METH_NOARGS, zlib_Compress___copy____doc__}
 
 static PyObject *
-zlib_Compress___copy___impl(compobject *self, PyTypeObject *cls)
-/*[clinic end generated code: output=074613db332cb668 input=5c0188367ab0fe64]*/
+zlib_Compress___copy__(compobject *self, PyObject *Py_UNUSED(ignored))
 {
-    return zlib_Compress_copy_impl(self, cls);
+    return zlib_Compress_copy(self, NULL);
 }
 
-/*[clinic input]
-zlib.Compress.__deepcopy__
+PyDoc_STRVAR(zlib_Compress___deepcopy____doc__,
+"__deepcopy__($self, memo, /)\n"
+"--\n"
+"\n");
 
-    cls: defining_class
-    memo: object
-    /
-
-[clinic start generated code]*/
+#define ZLIB_COMPRESS___DEEPCOPY___METHODDEF    \
+    {"__deepcopy__", (PyCFunction)zlib_Compress___deepcopy__, METH_O, zlib_Compress___deepcopy____doc__}
 
 static PyObject *
-zlib_Compress___deepcopy___impl(compobject *self, PyTypeObject *cls,
-                                PyObject *memo)
-/*[clinic end generated code: output=24b3aed785f54033 input=c90347319a514430]*/
+zlib_Compress___deepcopy__(compobject *self, PyObject *memo)
 {
-    return zlib_Compress_copy_impl(self, cls);
+    return zlib_Compress_copy(self, NULL);
 }
 
-/*[clinic input]
-zlib.Decompress.copy
+PyDoc_STRVAR(zlib_Decompress_copy__doc__,
+"copy($self, /)\n"
+"--\n"
+"\n"
+"Return a copy of the decompression object.");
 
-    cls: defining_class
-
-Return a copy of the decompression object.
-[clinic start generated code]*/
-
+#define ZLIB_DECOMPRESS_COPY_METHODDEF    \
+    {"copy", (PyCFunction)zlib_Decompress_copy, METH_NOARGS, zlib_Decompress_copy__doc__}
 static PyObject *
-zlib_Decompress_copy_impl(compobject *self, PyTypeObject *cls)
-/*[clinic end generated code: output=a7ddc016e1d0a781 input=20ef3aa208282ff2]*/
+zlib_Decompress_copy(compobject *self, PyObject *Py_UNUSED(ignored))
 {
     compobject *return_value = newcompobject(Decomptype);
     if (!return_value) return NULL;
@@ -1002,35 +999,33 @@ error:
     return NULL;
 }
 
-/*[clinic input]
-zlib.Decompress.__copy__
+PyDoc_STRVAR(zlib_Decompress___copy____doc__,
+"__copy__($self, /)\n"
+"--\n"
+"\n");
 
-    cls: defining_class
-
-[clinic start generated code]*/
+#define ZLIB_DECOMPRESS___COPY___METHODDEF    \
+    {"__copy__", (PyCFunction)zlib_Decompress___copy__, METH_NOARGS, zlib_Decompress___copy____doc__}
 
 static PyObject *
-zlib_Decompress___copy___impl(compobject *self, PyTypeObject *cls)
-/*[clinic end generated code: output=cf1e6473744f53fa input=cc3143067b622bdf]*/
+zlib_Decompress___copy__(compobject *self, PyTypeObject *cls)
 {
-    return zlib_Decompress_copy_impl(self, cls);
+    return zlib_Decompress_copy(self, NULL);
 }
 
-/*[clinic input]
-zlib.Decompress.__deepcopy__
+PyDoc_STRVAR(zlib_Decompress___deepcopy____doc__,
+"__deepcopy__($self, memo, /)\n"
+"--\n"
+"\n");
 
-    cls: defining_class
-    memo: object
-    /
 
-[clinic start generated code]*/
+#define ZLIB_DECOMPRESS___DEEPCOPY___METHODDEF    \
+    {"__deepcopy__", (PyCFunction)zlib_Decompress___deepcopy__, METH_O, zlib_Decompress___deepcopy____doc__}
 
 static PyObject *
-zlib_Decompress___deepcopy___impl(compobject *self, PyTypeObject *cls,
-                                  PyObject *memo)
-/*[clinic end generated code: output=34f7b719a0c0d51b input=fc13b9c58622544e]*/
+zlib_Decompress___deepcopy__(compobject *self, PyObject *memo)
 {
-    return zlib_Decompress_copy_impl(self, cls);
+    return zlib_Decompress_copy(self, NULL);
 }
 
 
