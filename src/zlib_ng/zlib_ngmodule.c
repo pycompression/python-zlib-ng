@@ -225,7 +225,7 @@ zlib_compress_impl(PyObject *module, Py_buffer *data, int level, int wbits)
         PyErr_SetString(state->ZlibError, "Bad compression level");
         goto error;
     default:
-        deflateEnd(&zst);
+        zng_deflateEnd(&zst);
         zlib_error(state, zst, err, "while compressing data");
         goto error;
     }
@@ -237,7 +237,7 @@ zlib_compress_impl(PyObject *module, Py_buffer *data, int level, int wbits)
         do {
             obuflen = arrange_output_buffer(&zst, &return_value, obuflen);
             if (obuflen < 0) {
-                deflateEnd(&zst);
+                zng_deflateEnd(&zst);
                 goto error;
             }
 
@@ -257,7 +257,7 @@ zlib_compress_impl(PyObject *module, Py_buffer *data, int level, int wbits)
     } while (flush != Z_FINISH);
     assert(err == Z_STREAM_END);
 
-    err = deflateEnd(&zst);
+    err = zng_deflateEnd(&zst);
     if (err == Z_OK) {
         if (_PyBytes_Resize(&return_value, zst.next_out -
                             (uint8_t *)PyBytes_AS_STRING(return_value)) < 0) {
