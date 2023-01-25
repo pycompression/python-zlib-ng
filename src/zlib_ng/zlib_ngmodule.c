@@ -1528,59 +1528,6 @@ ZlibDecompressor__new__(PyTypeObject *cls,
     }
 }
 
-static PyMethodDef comp_methods[] =
-{
-    ZLIB_COMPRESS_COMPRESS_METHODDEF,
-    ZLIB_COMPRESS_FLUSH_METHODDEF,
-    ZLIB_COMPRESS_COPY_METHODDEF,
-    ZLIB_COMPRESS___COPY___METHODDEF,
-    ZLIB_COMPRESS___DEEPCOPY___METHODDEF,
-    {NULL, NULL}
-};
-
-static PyMethodDef Decomp_methods[] =
-{
-    ZLIB_DECOMPRESS_DECOMPRESS_METHODDEF,
-    ZLIB_DECOMPRESS_FLUSH_METHODDEF,
-    ZLIB_DECOMPRESS_COPY_METHODDEF,
-    ZLIB_DECOMPRESS___COPY___METHODDEF,
-    ZLIB_DECOMPRESS___DEEPCOPY___METHODDEF,
-    {NULL, NULL}
-};
-
-static PyMethodDef ZlibDecompressor_methods[] = {
-    ZLIB_ZLIBDECOMPRESSOR_DECOMPRESS_METHODDEF,
-    {NULL}
-};
-
-#define COMP_OFF(x) offsetof(compobject, x)
-static PyMemberDef Decomp_members[] = {
-    {"unused_data",     T_OBJECT, COMP_OFF(unused_data), READONLY},
-    {"unconsumed_tail", T_OBJECT, COMP_OFF(unconsumed_tail), READONLY},
-    {"eof",             T_BOOL,   COMP_OFF(eof), READONLY},
-    {NULL},
-};
-
-PyDoc_STRVAR(ZlibDecompressor_eof__doc__,
-"True if the end-of-stream marker has been reached.");
-
-PyDoc_STRVAR(ZlibDecompressor_unused_data__doc__,
-"Data found after the end of the compressed stream.");
-
-PyDoc_STRVAR(ZlibDecompressor_needs_input_doc,
-"True if more input is needed before more decompressed data can be produced.");
-
-static PyMemberDef ZlibDecompressor_members[] = {
-    {"eof", T_BOOL, offsetof(ZlibDecompressor, eof),
-     READONLY, ZlibDecompressor_eof__doc__},
-    {"unused_data", T_OBJECT_EX, offsetof(ZlibDecompressor, unused_data),
-     READONLY, ZlibDecompressor_unused_data__doc__},
-    {"needs_input", T_BOOL, offsetof(ZlibDecompressor, needs_input), READONLY,
-     ZlibDecompressor_needs_input_doc},
-    {NULL},
-};
-
-
 PyDoc_STRVAR(zlib_adler32__doc__,
 "adler32($module, data, value=1, /)\n"
 "--\n"
@@ -2017,6 +1964,58 @@ zlib_Decompress_flush(compobject *self, PyObject *const *args, Py_ssize_t nargs)
     }
     return zlib_Decompress_flush_impl(self, length);
 }
+
+static PyMethodDef comp_methods[] =
+{
+    ZLIB_COMPRESS_COMPRESS_METHODDEF,
+    ZLIB_COMPRESS_FLUSH_METHODDEF,
+    ZLIB_COMPRESS_COPY_METHODDEF,
+    ZLIB_COMPRESS___COPY___METHODDEF,
+    ZLIB_COMPRESS___DEEPCOPY___METHODDEF,
+    {NULL, NULL}
+};
+
+static PyMethodDef Decomp_methods[] =
+{
+    ZLIB_DECOMPRESS_DECOMPRESS_METHODDEF,
+    ZLIB_DECOMPRESS_FLUSH_METHODDEF,
+    ZLIB_DECOMPRESS_COPY_METHODDEF,
+    ZLIB_DECOMPRESS___COPY___METHODDEF,
+    ZLIB_DECOMPRESS___DEEPCOPY___METHODDEF,
+    {NULL, NULL}
+};
+
+static PyMethodDef ZlibDecompressor_methods[] = {
+    ZLIB_ZLIBDECOMPRESSOR_DECOMPRESS_METHODDEF,
+    {NULL}
+};
+
+#define COMP_OFF(x) offsetof(compobject, x)
+static PyMemberDef Decomp_members[] = {
+    {"unused_data",     T_OBJECT, COMP_OFF(unused_data), READONLY},
+    {"unconsumed_tail", T_OBJECT, COMP_OFF(unconsumed_tail), READONLY},
+    {"eof",             T_BOOL,   COMP_OFF(eof), READONLY},
+    {NULL},
+};
+
+PyDoc_STRVAR(ZlibDecompressor_eof__doc__,
+"True if the end-of-stream marker has been reached.");
+
+PyDoc_STRVAR(ZlibDecompressor_unused_data__doc__,
+"Data found after the end of the compressed stream.");
+
+PyDoc_STRVAR(ZlibDecompressor_needs_input_doc,
+"True if more input is needed before more decompressed data can be produced.");
+
+static PyMemberDef ZlibDecompressor_members[] = {
+    {"eof", T_BOOL, offsetof(ZlibDecompressor, eof),
+     READONLY, ZlibDecompressor_eof__doc__},
+    {"unused_data", T_OBJECT_EX, offsetof(ZlibDecompressor, unused_data),
+     READONLY, ZlibDecompressor_unused_data__doc__},
+    {"needs_input", T_BOOL, offsetof(ZlibDecompressor, needs_input), READONLY,
+     ZlibDecompressor_needs_input_doc},
+    {NULL},
+};
 
 
 static PyMethodDef zlib_methods[] =
