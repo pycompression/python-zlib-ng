@@ -956,7 +956,7 @@ LAERTES
 """
 
 
-class ZlibDecompressorTest():
+class ZlibDecompressorTest(unittest.TestCase):
     # Test adopted from test_bz2.py
     TEXT = HAMLET_SCENE
     DATA = zlib.compress(HAMLET_SCENE)
