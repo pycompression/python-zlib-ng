@@ -1943,7 +1943,6 @@ static PyMethodDef zlib_methods[] =
 };
 
 
-
 PyDoc_STRVAR(zlib_module_documentation,
 "The functions in this module allow compression and decompression using the\n"
 "zlib-ng library, which is a performance enhanced drop-in replacement for zlib.\n"
@@ -1959,115 +1958,72 @@ PyDoc_STRVAR(zlib_module_documentation,
 "Compressor objects support compress() and flush() methods; decompressor\n"
 "objects support decompress() and flush().");
 
-static int
-zlib_exec(PyObject *mod)
-{
-    Comptype = (PyTypeObject *)PyType_FromSpec(&Comptype_spec);
-    if (Comptype == NULL) {
-        return -1;
-    }
-
-    Decomptype = (PyTypeObject *)PyType_FromSpec(&Decomptype_spec);
-    if (Decomptype == NULL) {
-        return -1;
-    }
-
-    ZlibDecompressorType = (PyTypeObject *)PyType_FromSpec(&ZlibDecompressor_type_spec);
-    if (ZlibDecompressorType == NULL) {
-        return -1;
-    }
-
-    ZlibError = PyErr_NewException("zlib.error", NULL, NULL);
-    if (ZlibError == NULL) {
-        return -1;
-    }
-
-    if (PyModule_AddObject(mod, "error", Py_NewRef(ZlibError)) < 0) {
-        Py_DECREF(ZlibError);
-        return -1;
-    }
-    if (PyModule_AddObject(mod, "_ZlibDecompressor",
-                           Py_NewRef(ZlibDecompressorType)) < 0) {
-        Py_DECREF(ZlibDecompressorType);
-        return -1;
-    }
-
-#define ZLIB_ADD_INT_MACRO(c)                           \
-    do {                                                \
-        if ((PyModule_AddIntConstant(mod, #c, c)) < 0) {  \
-            return -1;                                  \
-        }                                               \
-    } while(0)
-
-    ZLIB_ADD_INT_MACRO(MAX_WBITS);
-    ZLIB_ADD_INT_MACRO(DEFLATED);
-    ZLIB_ADD_INT_MACRO(DEF_MEM_LEVEL);
-    ZLIB_ADD_INT_MACRO(DEF_BUF_SIZE);
-    // compression levels
-    ZLIB_ADD_INT_MACRO(Z_NO_COMPRESSION);
-    ZLIB_ADD_INT_MACRO(Z_BEST_SPEED);
-    ZLIB_ADD_INT_MACRO(Z_BEST_COMPRESSION);
-    ZLIB_ADD_INT_MACRO(Z_DEFAULT_COMPRESSION);
-    // compression strategies
-    ZLIB_ADD_INT_MACRO(Z_FILTERED);
-    ZLIB_ADD_INT_MACRO(Z_HUFFMAN_ONLY);
-#ifdef Z_RLE // 1.2.0.1
-    ZLIB_ADD_INT_MACRO(Z_RLE);
-#endif
-#ifdef Z_FIXED // 1.2.2.2
-    ZLIB_ADD_INT_MACRO(Z_FIXED);
-#endif
-    ZLIB_ADD_INT_MACRO(Z_DEFAULT_STRATEGY);
-    // allowed flush values
-    ZLIB_ADD_INT_MACRO(Z_NO_FLUSH);
-    ZLIB_ADD_INT_MACRO(Z_PARTIAL_FLUSH);
-    ZLIB_ADD_INT_MACRO(Z_SYNC_FLUSH);
-    ZLIB_ADD_INT_MACRO(Z_FULL_FLUSH);
-    ZLIB_ADD_INT_MACRO(Z_FINISH);
-#ifdef Z_BLOCK // 1.2.0.5 for inflate, 1.2.3.4 for deflate
-    ZLIB_ADD_INT_MACRO(Z_BLOCK);
-#endif
-#ifdef Z_TREES // 1.2.3.4, only for inflate
-    ZLIB_ADD_INT_MACRO(Z_TREES);
-#endif
-    PyObject *ver = PyUnicode_FromString(ZLIBNG_VERSION);
-    if (ver == NULL) {
-        return -1;
-    }
-
-    if (PyModule_AddObject(mod, "ZLIBNG_VERSION", ver) < 0) {
-        Py_DECREF(ver);
-        return -1;
-    }
-
-    ver = PyUnicode_FromString(zlibng_version());
-    if (ver == NULL) {
-        return -1;
-    }
-
-    if (PyModule_AddObject(mod, "ZLIBNG_RUNTIME_VERSION", ver) < 0) {
-        Py_DECREF(ver);
-        return -1;
-    }
-
-    return 0;
-}
-
-static PyModuleDef_Slot zlib_slots[] = {
-    {Py_mod_exec, zlib_exec},
-    {0, NULL}
-};
-
 static struct PyModuleDef zlibmodule = {
     PyModuleDef_HEAD_INIT,
-    .m_name = "zlib",
+    .m_name = "zlib_ng",
     .m_doc = zlib_module_documentation,
     .m_methods = zlib_methods,
-    .m_slots = zlib_slots,
 };
 
 PyMODINIT_FUNC
-PyInit_zlib(void)
+PyInit_zlib_ng(void)
 {
-    return PyModuleDef_Init(&zlibmodule);
+    PyObject *m, *ver;
+    m = PyModule_Create(&zlibmodule);
+    if (m == NULL) {
+        return NULL;
+    }
+    if (PyType_Ready(&Comptype) < 0) {
+        return NULL;
+    }
+    if (PyType_Ready(&Decomptype) < 0) {
+        return NULL;
+    }
+    if (PyType_Ready(&ZlibDecompressorType) < 0) {
+        return NULL;
+    }
+    PyObject *ZlibDecompressorType_obj = (PyObject *)&ZlibDecompressorType;
+    Py_INCREF(ZlibDecompressorType_obj);
+    PyModule_AddObject(m, "_ZlibDecompressor", ZlibDecompressorType_obj);
+
+    ZlibError = PyErr_NewException("zlib.error", NULL, NULL);
+    if (ZlibError == NULL) {
+        return NULL; 
+    } 
+    Py_INCREF(ZlibError);
+    PyModule_AddObject(m, "error", ZlibError);
+    PyModule_AddIntMacro(m, MAX_WBITS);
+    PyModule_AddIntMacro(m, DEFLATED);
+    PyModule_AddIntMacro(m, DEF_MEM_LEVEL);
+    PyModule_AddIntMacro(m, DEF_BUF_SIZE);
+    // compression levels
+    PyModule_AddIntMacro(m, Z_NO_COMPRESSION);
+    PyModule_AddIntMacro(m, Z_BEST_SPEED);
+    PyModule_AddIntMacro(m, Z_BEST_COMPRESSION);
+    PyModule_AddIntMacro(m, Z_DEFAULT_COMPRESSION);
+    // compression strategies
+    PyModule_AddIntMacro(m, Z_FILTERED);
+    PyModule_AddIntMacro(m, Z_HUFFMAN_ONLY);
+    PyModule_AddIntMacro(m, Z_RLE);
+    PyModule_AddIntMacro(m, Z_FIXED);
+    PyModule_AddIntMacro(m, Z_DEFAULT_STRATEGY);
+    // allowed flush values
+    PyModule_AddIntMacro(m, Z_NO_FLUSH);
+    PyModule_AddIntMacro(m, Z_PARTIAL_FLUSH);
+    PyModule_AddIntMacro(m, Z_SYNC_FLUSH);
+    PyModule_AddIntMacro(m, Z_FULL_FLUSH);
+    PyModule_AddIntMacro(m, Z_FINISH);
+    PyModule_AddIntMacro(m, Z_BLOCK);
+    PyModule_AddIntMacro(m, Z_TREES);
+    ver = PyUnicode_FromString(ZLIBNG_VERSION);
+    if (ver != NULL)
+        PyModule_AddObject(m, "ZLIBNG_VERSION", ver);
+
+    ver = PyUnicode_FromString(zlibng_version());
+    if (ver != NULL)
+        PyModule_AddObject(m, "ZLIBNG_RUNTIME_VERSION", ver);
+
+    PyModule_AddStringConstant(m, "__version__", "1.0");
+
+    return m;
 }
