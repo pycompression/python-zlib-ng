@@ -359,38 +359,10 @@ zlib_decompress_impl(PyObject *module, Py_buffer *data, int wbits,
     return NULL;
 }
 
-/*[clinic input]
-zlib.compressobj
-
-    level: int(c_default="Z_DEFAULT_COMPRESSION") = Z_DEFAULT_COMPRESSION
-        The compression level (an integer in the range 0-9 or -1; default is
-        currently equivalent to 6).  Higher compression levels are slower,
-        but produce smaller results.
-    method: int(c_default="DEFLATED") = DEFLATED
-        The compression algorithm.  If given, this must be DEFLATED.
-    wbits: int(c_default="MAX_WBITS") = MAX_WBITS
-        +9 to +15: The base-two logarithm of the window size.  Include a zlib
-            container.
-        -9 to -15: Generate a raw stream.
-        +25 to +31: Include a gzip container.
-    memLevel: int(c_default="DEF_MEM_LEVEL") = DEF_MEM_LEVEL
-        Controls the amount of memory used for internal compression state.
-        Valid values range from 1 to 9.  Higher values result in higher memory
-        usage, faster compression, and smaller output.
-    strategy: int(c_default="Z_DEFAULT_STRATEGY") = Z_DEFAULT_STRATEGY
-        Used to tune the compression algorithm.  Possible values are
-        Z_DEFAULT_STRATEGY, Z_FILTERED, and Z_HUFFMAN_ONLY.
-    zdict: Py_buffer = None
-        The predefined compression dictionary - a sequence of bytes
-        containing subsequences that are likely to occur in the input data.
-
-Return a compressor object.
-[clinic start generated code]*/
 
 static PyObject *
 zlib_compressobj_impl(PyObject *module, int level, int method, int wbits,
                       int memLevel, int strategy, Py_buffer *zdict)
-/*[clinic end generated code: output=8b5bed9c8fc3814d input=2fa3d026f90ab8d5]*/
 {
     if (zdict->buf != NULL && (size_t)zdict->len > UINT32_MAX) {
         PyErr_SetString(PyExc_OverflowError,
@@ -468,21 +440,8 @@ set_inflate_zdict(compobject *self)
     return 0;
 }
 
-/*[clinic input]
-zlib.decompressobj
-
-    wbits: int(c_default="MAX_WBITS") = MAX_WBITS
-        The window buffer size and container format.
-    zdict: object(c_default="NULL") = b''
-        The predefined compression dictionary.  This must be the same
-        dictionary as used by the compressor that produced the input data.
-
-Return a decompressor object.
-[clinic start generated code]*/
-
 static PyObject *
 zlib_decompressobj_impl(PyObject *module, int wbits, PyObject *zdict)
-/*[clinic end generated code: output=3069b99994f36906 input=d3832b8511fc977b]*/
 {
     if (zdict != NULL && !PyObject_CheckBuffer(zdict)) {
         PyErr_SetString(PyExc_TypeError,
@@ -557,24 +516,8 @@ Decomp_dealloc(compobject *self)
     Dealloc(self);
 }
 
-/*[clinic input]
-zlib.Compress.compress
-
-    cls: defining_class
-    data: Py_buffer
-        Binary data to be compressed.
-    /
-
-Returns a bytes object containing compressed data.
-
-After calling this function, some of the input data may still
-be stored in internal buffers for later processing.
-Call the flush() method to clear these buffers.
-[clinic start generated code]*/
-
 static PyObject *
 zlib_Compress_compress_impl(compobject *self, Py_buffer *data)
-/*[clinic end generated code: output=6731b3f0ff357ca6 input=04d00f65ab01d260]*/
 {
     PyObject *return_value = NULL;
     int err;
@@ -665,29 +608,9 @@ save_unconsumed_input(compobject *self, Py_buffer *data, int err)
     return 0;
 }
 
-/*[clinic input]
-zlib.Decompress.decompress
-
-    cls: defining_class
-    data: Py_buffer
-        The binary data to decompress.
-    /
-    max_length: Py_ssize_t = 0
-        The maximum allowable length of the decompressed data.
-        Unconsumed input data will be stored in
-        the unconsumed_tail attribute.
-
-Return a bytes object containing the decompressed version of the data.
-
-After calling this function, some of the input data may still be stored in
-internal buffers for later processing.
-Call the flush() method to clear these buffers.
-[clinic start generated code]*/
-
 static PyObject *
 zlib_Decompress_decompress_impl(compobject *self,
                                 Py_buffer *data, Py_ssize_t max_length)
-/*[clinic end generated code: output=b024a93c2c922d57 input=bfb37b3864cfb606]*/
 {
     int err = Z_OK;
     Py_ssize_t ibuflen;
@@ -781,23 +704,8 @@ zlib_Decompress_decompress_impl(compobject *self,
     return return_value;
 }
 
-/*[clinic input]
-zlib.Compress.flush
-
-    cls: defining_class
-    mode: int(c_default="Z_FINISH") = zlib.Z_FINISH
-        One of the constants Z_SYNC_FLUSH, Z_FULL_FLUSH, Z_FINISH.
-        If mode == Z_FINISH, the compressor object can no longer be
-        used after calling the flush() method.  Otherwise, more data
-        can still be compressed.
-    /
-
-Return a bytes object containing any remaining compressed data.
-[clinic start generated code]*/
-
 static PyObject *
 zlib_Compress_flush_impl(compobject *self, int mode)
-/*[clinic end generated code: output=c7efd13efd62add2 input=286146e29442eb6c]*/
 {
     int err;
     Py_ssize_t length = DEF_BUF_SIZE;
@@ -1025,21 +933,9 @@ zlib_Decompress___deepcopy__(compobject *self, PyObject *memo)
 }
 
 
-/*[clinic input]
-zlib.Decompress.flush
-
-    cls: defining_class
-    length: Py_ssize_t(c_default="DEF_BUF_SIZE") = zlib.DEF_BUF_SIZE
-        the initial size of the output buffer.
-    /
-
-Return a bytes object containing any remaining decompressed data.
-[clinic start generated code]*/
-
 static PyObject *
 zlib_Decompress_flush_impl(compobject *self,
                            Py_ssize_t length)
-/*[clinic end generated code: output=4532fc280bd0f8f2 input=42f1f4b75230e2cd]*/
 {
     int err, flush;
     Py_buffer data;
@@ -1135,10 +1031,6 @@ typedef struct {
     char needs_input;
 } ZlibDecompressor;
 
-/*[clinic input]
-class zlib.ZlibDecompressor "ZlibDecompressor *" "&ZlibDecompressorType"
-[clinic start generated code]*/
-/*[clinic end generated code: output=da39a3ee5e6b4b0d input=0658178ab94645df]*/
 
 static void
 ZlibDecompressor_dealloc(ZlibDecompressor *self)
@@ -1412,14 +1304,11 @@ was less than *max_length* bytes, or because *max_length* was negative),
 
 Attempting to decompress data after the end of stream is reached raises an
 EOFError.  Any data found after the end of the stream is ignored and saved in
-the unused_data attribute.
-[clinic start generated code]*/
+the unused_data attribute. */
 
 static PyObject *
 zlib_ZlibDecompressor_decompress_impl(ZlibDecompressor *self,
                                       Py_buffer *data, Py_ssize_t max_length)
-/*[clinic end generated code: output=990d32787b775f85 input=0b29d99715250b96]*/
-
 {
     PyObject *result = NULL;
 
