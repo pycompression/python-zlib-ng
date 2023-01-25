@@ -198,6 +198,7 @@ static PyObject *
 zlib_compress_impl(PyObject *module, Py_buffer *data, int level, int wbits)
 {
     PyObject *return_value = NULL;
+    Py_ssize_t obuflen = DEF_BUF_SIZE;
     int32_t flush;
     zng_stream zst;
 
@@ -205,7 +206,6 @@ zlib_compress_impl(PyObject *module, Py_buffer *data, int level, int wbits)
 
     uint8_t *ibuf = data->buf;
     Py_ssize_t ibuflen = data->len;
-    Py_ssize_t obuflen = DEF_BUF_SIZE;
 
     zst.opaque = NULL;
     zst.zalloc = PyZlib_Malloc;
@@ -260,8 +260,9 @@ zlib_compress_impl(PyObject *module, Py_buffer *data, int level, int wbits)
     err = deflateEnd(&zst);
     if (err == Z_OK) {
         if (_PyBytes_Resize(&return_value, zst.next_out -
-                            (uint8_t *)PyBytes_AS_STRING(return_value)) < 0)
+                            (uint8_t *)PyBytes_AS_STRING(return_value)) < 0) {
             goto error;
+        }
         return return_value;
     }
     else
@@ -289,6 +290,7 @@ zlib_decompress_impl(PyObject *module, Py_buffer *data, int wbits,
     } else if (bufsize == 0) {
         bufsize = 1;
     }
+
 
     ibuf = data->buf;
     ibuflen = data->len;
@@ -362,9 +364,9 @@ zlib_decompress_impl(PyObject *module, Py_buffer *data, int wbits,
     }
 
     if (_PyBytes_Resize(&return_value, zst.next_out -
-                        (Byte *)PyBytes_AS_STRING(return_value)) < 0)
+                        (uint8_t *)PyBytes_AS_STRING(return_value)) < 0) {
         goto error;
-
+    }
     return return_value;
 
  error:
@@ -595,7 +597,6 @@ zlib_Compress_compress_impl(compobject *self, PyTypeObject *cls,
 {
     PyObject *return_value = NULL;
     int err;
-    Py_ssize_t ibuflen;
     Py_ssize_t obuflen = DEF_BUF_SIZE;
     zlibstate *state = PyType_GetModuleState(cls);
 
@@ -608,11 +609,9 @@ zlib_Compress_compress_impl(compobject *self, PyTypeObject *cls,
         arrange_input_buffer(&self->zst, &ibuflen);
 
         do {
-            if (self->zst.avail_out == 0) {
-                obuflen = arrange_output_buffer(&self->zst, &return_value, obuflen);
-                if (obuflen < 0) {
-                    goto error;
-                }
+            obuflen = arrange_output_buffer(&self->zst, &return_value, obuflen);
+            if (obuflen < 0) {
+                goto error;
             }
 
             Py_BEGIN_ALLOW_THREADS
@@ -630,7 +629,7 @@ zlib_Compress_compress_impl(compobject *self, PyTypeObject *cls,
     } while (ibuflen != 0);
 
     if (_PyBytes_Resize(&return_value, self->zst.next_out -
-                        (Byte *)PyBytes_AS_STRING(return_value)) == 0)
+                        (uint8_t *)PyBytes_AS_STRING(return_value)) == 0) {
         goto success;
 
  error:
@@ -710,10 +709,10 @@ zlib_Decompress_decompress_impl(compobject *self, PyTypeObject *cls,
 /*[clinic end generated code: output=b024a93c2c922d57 input=bfb37b3864cfb606]*/
 {
     int err = Z_OK;
-    Py_ssize_t ibuflen; 
+    Py_ssize_t ibuflen;
     Py_ssize_t obuflen = DEF_BUF_SIZE;
-    Py_ssize_t hard_limit;
     PyObject *return_value = NULL;
+    Py_ssize_t hard_limit;
 
     PyObject *module = PyType_GetModule(cls);
     if (module == NULL)
@@ -729,14 +728,15 @@ zlib_Decompress_decompress_impl(compobject *self, PyTypeObject *cls,
     else
         hard_limit = max_length;
 
+    /* limit amount of data allocated to max_length */
+    if (max_length && obuflen > max_length) {
+        obuflen = max_length;
+    }
+
     ENTER_ZLIB(self);
 
     self->zst.next_in = data->buf;
     ibuflen = data->len;
-
-    /* limit amount of data allocated to max_length */
-    if (max_length && obuflen > max_length)
-        obuflen = max_length;
 
     do {
         arrange_input_buffer(&self->zst, &ibuflen);
@@ -795,10 +795,10 @@ zlib_Decompress_decompress_impl(compobject *self, PyTypeObject *cls,
         goto abort;
     }
 
-   if (_PyBytes_Resize(&return_value, self->zst.next_out -
-                        (Byte *)PyBytes_AS_STRING(return_value)) == 0)
+    if (_PyBytes_Resize(&return_value, self->zst.next_out -
+                        (Byte *)PyBytes_AS_STRING(return_value)) == 0) {
         goto success;
-
+    }
  abort:
     Py_CLEAR(return_value);
  success:
@@ -852,6 +852,7 @@ zlib_Compress_flush_impl(compobject *self, PyTypeObject *cls, int mode)
 
         if (err == Z_STREAM_ERROR) {
             zlib_error(state, self->zst, err, "while flushing");
+            Py_CLEAR(return_value);
             goto error;
         }
     } while (self->zst.avail_out == 0);
@@ -864,6 +865,7 @@ zlib_Compress_flush_impl(compobject *self, PyTypeObject *cls, int mode)
         err = zng_deflateEnd(&self->zst);
         if (err != Z_OK) {
             zlib_error(state, self->zst, err, "while finishing compression");
+            Py_CLEAR(return_value);
             goto error;
         }
         else
@@ -875,6 +877,7 @@ zlib_Compress_flush_impl(compobject *self, PyTypeObject *cls, int mode)
         */
     } else if (err != Z_OK && err != Z_BUF_ERROR) {
         zlib_error(state, self->zst, err, "while flushing");
+        Py_CLEAR(return_value);
         goto error;
     }
 
@@ -1100,15 +1103,16 @@ zlib_Decompress_flush_impl(compobject *self, PyTypeObject *cls,
     self->zst.next_in = data.buf;
     ibuflen = data.len;
 
+
     do {
         arrange_input_buffer(&self->zst, &ibuflen);
         flush = ibuflen == 0 ? Z_FINISH : Z_NO_FLUSH;
 
         do {
             length = arrange_output_buffer(&self->zst, &return_value, length);
-            if (length < 0)
+            if (length < 0) {
                 goto abort;
-
+            }
 
             Py_BEGIN_ALLOW_THREADS
             err = zng_inflate(&self->zst, flush);
@@ -1144,9 +1148,9 @@ zlib_Decompress_flush_impl(compobject *self, PyTypeObject *cls,
     }
 
     if (_PyBytes_Resize(&return_value, self->zst.next_out -
-                        (Byte *)PyBytes_AS_STRING(return_value)) == 0)
+                        (Byte *)PyBytes_AS_STRING(return_value)) == 0) {
         goto success;
-
+    }
  abort:
     Py_CLEAR(return_value);
  success:
@@ -1260,10 +1264,10 @@ decompress_buf(ZlibDecompressor *self, Py_ssize_t max_length)
         arrange_input_buffer(&(self->zst), &(self->avail_in_real));
 
         do {
-            obuflen = arrange_output_buffer_with_maximum(&(self->zst),
-                                                        &return_value,
-                                                        obuflen,
-                                                        hard_limit);
+            obuflen = arrange_output_buffer_with_maximum(&self->zst,
+                                                         &return_value,
+                                                         obuflen,
+                                                         hard_limit);
             if (obuflen == -1){
                 PyErr_SetString(PyExc_MemoryError,
                                 "Insufficient memory for buffer allocation");
