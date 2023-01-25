@@ -1441,8 +1441,6 @@ zlib_adler32(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
     PyObject *return_value = NULL;
     Py_buffer data = {NULL, NULL};
     uint32_t value = 1;
-    Py_ssize_t len = data.len ;
-    uint8_t *buf = data.buf;
 
     if (nargs < 1 || nargs > 2) {
         PyErr_Format(
@@ -1462,6 +1460,8 @@ zlib_adler32(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
         }
     }
 
+    Py_ssize_t len = data.len ;
+    uint8_t *buf = data.buf;
     while ((size_t)len > UINT32_MAX) {
         value = zng_adler32(value, buf, UINT32_MAX);
         buf += (size_t) UINT32_MAX;
