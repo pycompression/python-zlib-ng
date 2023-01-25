@@ -806,9 +806,12 @@ zlib_Compress_copy(compobject *self, PyObject *Py_UNUSED(ignored))
         zlib_error(self->zst, err, "while copying compression object");
         goto error;
     }
-    Py_XSETREF(return_value->unused_data, Py_NewRef(self->unused_data));
-    Py_XSETREF(return_value->unconsumed_tail, Py_NewRef(self->unconsumed_tail));
-    Py_XSETREF(return_value->zdict, Py_XNewRef(self->zdict));
+    Py_INCREF(self->unused_data);
+    Py_INCREF(self->unconsumed_tail);
+    Py_XINCREF(self->zdict);
+    Py_XSETREF(return_value->unused_data, self->unused_data);
+    Py_XSETREF(return_value->unconsumed_tail, self->unconsumed_tail);
+    Py_XSETREF(return_value->zdict, self->zdict);
     return_value->eof = self->eof;
 
     /* Mark it as being initialized */
@@ -886,9 +889,12 @@ zlib_Decompress_copy(compobject *self, PyObject *Py_UNUSED(ignored))
         goto error;
     }
 
-    Py_XSETREF(return_value->unused_data, Py_NewRef(self->unused_data));
-    Py_XSETREF(return_value->unconsumed_tail, Py_NewRef(self->unconsumed_tail));
-    Py_XSETREF(return_value->zdict, Py_XNewRef(self->zdict));
+    Py_INCREF(self->unused_data);
+    Py_INCREF(self->unconsumed_tail);
+    Py_XINCREF(self->zdict);
+    Py_XSETREF(return_value->unused_data, self->unused_data);
+    Py_XSETREF(return_value->unconsumed_tail, self->unconsumed_tail);
+    Py_XSETREF(return_value->zdict, self->zdict);
     return_value->eof = self->eof;
 
     /* Mark it as being initialized */
@@ -1038,7 +1044,7 @@ ZlibDecompressor_dealloc(ZlibDecompressor *self)
     PyObject *type = (PyObject *)Py_TYPE(self);
     PyThread_free_lock(self->lock);
     if (self->is_initialised) {
-        inflateEnd(&self->zst);
+        zng_inflateEnd(&self->zst);
     }
     PyMem_Free(self->input_buffer);
     Py_CLEAR(self->unused_data);
@@ -1369,7 +1375,8 @@ ZlibDecompressor__new__(PyTypeObject *cls,
     self->avail_in_real = 0;
     self->input_buffer = NULL;
     self->input_buffer_size = 0;
-    self->zdict = Py_XNewRef(zdict);
+    Py_XINCREF(zdict);
+    self->zdict = zdict;
     self->zst.opaque = NULL;
     self->zst.zalloc = PyZlib_Malloc;
     self->zst.zfree = PyZlib_Free;
@@ -1587,8 +1594,6 @@ zlib_decompress(PyObject *module, PyObject *args, PyObject *kwargs)
         args, kwargs, format, keywords, &data, &wbits, &bufsize)) {
         return NULL;
     }
-    int hist_bits;
-    int flag; 
    
     return_value = zlib_decompress_impl(module, &data, wbits, bufsize);
     PyBuffer_Release(&data);
@@ -1906,7 +1911,7 @@ static PyTypeObject Comptype = {
     .tp_name = "zlib_ng.Compress",
     .tp_basicsize = sizeof(compobject),
     .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_dealloc = Comp_dealloc,
+    .tp_dealloc = (destructor)Comp_dealloc,
     .tp_methods = comp_methods,
 };
 
@@ -1914,7 +1919,7 @@ static PyTypeObject Decomptype = {
     .tp_name = "zlib_ng.Decompress",
     .tp_basicsize = sizeof(compobject),
     .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_dealloc = Decomp_dealloc,
+    .tp_dealloc = (destructor)Decomp_dealloc,
     .tp_methods = Decomp_methods,
     .tp_members = Decomp_members,
 };
@@ -1924,6 +1929,7 @@ static PyTypeObject ZlibDecompressorType = {
     .tp_basicsize = sizeof(ZlibDecompressor),
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_members = ZlibDecompressor_members,
+    .tp_dealloc = (destructor)ZlibDecompressor_dealloc,
     .tp_new = ZlibDecompressor__new__,
     .tp_doc = ZlibDecompressor__new____doc__,
     .tp_methods = ZlibDecompressor_methods,

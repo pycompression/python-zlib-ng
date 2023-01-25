@@ -87,7 +87,7 @@ def build_zlib_ng():
     if BUILD_CACHE:
         if BUILD_CACHE_FILE.exists():
             cache_path = Path(BUILD_CACHE_FILE.read_text())
-            if (cache_path / "include" / "zlib-ng.h").exists():
+            if (cache_path / "zlib-ng.h").exists():
                 return str(cache_path)
 
     # Creating temporary directories
