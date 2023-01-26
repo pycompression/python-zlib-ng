@@ -491,13 +491,11 @@ zlib_decompressobj_impl(PyObject *module, int wbits, PyObject *zdict)
 static void
 Dealloc(compobject *self)
 {
-    PyObject *type = (PyObject *)Py_TYPE(self);
     PyThread_free_lock(self->lock);
     Py_XDECREF(self->unused_data);
     Py_XDECREF(self->unconsumed_tail);
     Py_XDECREF(self->zdict);
     PyObject_Free(self);
-    Py_DECREF(type);
 }
 
 static void
@@ -1047,7 +1045,6 @@ typedef struct {
 static void
 ZlibDecompressor_dealloc(ZlibDecompressor *self)
 {
-    PyObject *type = (PyObject *)Py_TYPE(self);
     PyThread_free_lock(self->lock);
     if (self->is_initialised) {
         zng_inflateEnd(&self->zst);
@@ -1056,8 +1053,7 @@ ZlibDecompressor_dealloc(ZlibDecompressor *self)
     Py_CLEAR(self->unused_data);
     Py_CLEAR(self->zdict);
     PyObject_Free(self);
-    Py_DECREF(type);
-}
+ }
 
 static int
 set_inflate_zdict_ZlibDecompressor(ZlibDecompressor *self)
