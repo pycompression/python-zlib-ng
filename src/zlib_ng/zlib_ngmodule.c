@@ -1339,6 +1339,7 @@ zlib_ZlibDecompressor_decompress(ZlibDecompressor *self, PyObject *args, PyObjec
         result = decompress(self, data.buf, data.len, max_length);
     }
     LEAVE_ZLIB(self);
+    PyBuffer_Release(&data);
     return result;
 }
 
