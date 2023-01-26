@@ -49,7 +49,7 @@ def show_sizes():
         rel_sizes = (
             str(round(len(zlib_ng.compress(data_block, level)) / orig_size,
                       3))
-            for level in range(0, 4))
+            for level in range(-1, 10))
         print(name + "\t" + "\t".join(rel_sizes))
 
 
