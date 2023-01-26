@@ -961,6 +961,8 @@ class ZlibDecompressorTest(unittest.TestCase):
     TEXT = HAMLET_SCENE
     DATA = zlib.compress(HAMLET_SCENE)
     BAD_DATA = b"Not a valid deflate block"
+    BIG_TEXT = DATA * ((128 * 1024 // len(DATA)) + 1)
+    BIG_DATA = zlib.compress(BIG_TEXT)
     def test_Constructor(self):
         self.assertRaises(TypeError, zlib._ZlibDecompressor, 42)
 
