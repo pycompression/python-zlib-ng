@@ -106,6 +106,7 @@ class GzipNGFile(gzip.GzipFile):
     This class only supports opening files in binary mode. If you need to open
     a compressed file in text mode, use the gzip.open() function.
     """
+
     def __init__(self, filename=None, mode=None,
                  compresslevel=_COMPRESS_LEVEL_BEST,
                  fileobj=None, mtime=None):
@@ -143,10 +144,10 @@ class GzipNGFile(gzip.GzipFile):
         super().__init__(filename, mode, compresslevel, fileobj, mtime)
         if self.mode == WRITE:
             self.compress = zlib_ng.compressobj(compresslevel,
-                                                  zlib_ng.DEFLATED,
-                                                  -zlib_ng.MAX_WBITS,
-                                                  zlib_ng.DEF_MEM_LEVEL,
-                                                  0)
+                                                zlib_ng.DEFLATED,
+                                                -zlib_ng.MAX_WBITS,
+                                                zlib_ng.DEF_MEM_LEVEL,
+                                                0)
         if self.mode == READ:
             raw = _GzipNGReader(self.fileobj)
             self._buffer = io.BufferedReader(raw)
@@ -286,21 +287,21 @@ def _read_gzip_header(fp):
         # Read and discard a null-terminated string containing the filename
         while True:
             s = fp.read(1)
-            if not s or s==b'\000':
+            if not s or s == b'\000':
                 break
     if flag & FCOMMENT:
         # Read and discard a null-terminated string containing a comment
         while True:
             s = fp.read(1)
-            if not s or s==b'\000':
+            if not s or s == b'\000':
                 break
     if flag & FHCRC:
-        _read_exact(fp, 2)     # Read & discard the 16-bit header CRC
+        _read_exact(fp, 2)  # Read & discard the 16-bit header CRC
     return last_mtime
 
 
 def _create_simple_gzip_header(compresslevel: int,
-                               mtime = None) -> bytes:
+                               mtime=None) -> bytes:
     """
     Write a simple gzip header with no extra fields.
     :param compresslevel: Compresslevel used to determine the xfl bytes.
@@ -445,7 +446,7 @@ def main():
         else:
             gzip_file_kwargs = {"filename": out_filepath}
         out_file = GzipNGFile(mode="wb", fileobj=out_buffer,
-                             compresslevel=compresslevel, **gzip_file_kwargs)
+                              compresslevel=compresslevel, **gzip_file_kwargs)
     else:
         if args.file:
             in_file = open(args.file, mode="rb")
