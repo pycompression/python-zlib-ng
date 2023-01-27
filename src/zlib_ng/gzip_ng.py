@@ -107,7 +107,7 @@ class GzipNGFile(gzip.GzipFile):
     a compressed file in text mode, use the gzip.open() function.
     """
     def __init__(self, filename=None, mode=None,
-                 compresslevel=zlib_ng.Z_DEFAULT_COMPRESSION,
+                 compresslevel=_COMPRESS_LEVEL_BEST,
                  fileobj=None, mtime=None):
         """Constructor for the IGzipFile class.
 

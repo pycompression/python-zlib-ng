@@ -350,8 +350,9 @@ class TestGzip(BaseTest):
             self.assertEqual(cmByte, b'\x08') # deflate
 
             try:
-                expectedname = self.filename.encode('Latin-1') + b'\x00'
-                expectedflags = b'\x08' # only the FNAME flag is set
+                expectedname = os.path.basename(self.filename).encode(
+                    'Latin-1') + b'\x00'
+                expectedflags = b'\x08'  # only the FNAME flag is set
             except UnicodeEncodeError:
                 expectedname = b''
                 expectedflags = b'\x00'
@@ -778,7 +779,7 @@ def create_and_remove_directory(directory):
     def decorator(function):
         @functools.wraps(function)
         def wrapper(*args, **kwargs):
-            os.makedirs(directory)
+            os.makedirs(directory, exist_ok=True)
             try:
                 return function(*args, **kwargs)
             finally:
@@ -795,7 +796,7 @@ class TestCommandLine(unittest.TestCase):
             with gzip.GzipFile(fileobj=bytes_io, mode='wb') as gzip_file:
                 gzip_file.write(self.data)
 
-            args = sys.executable, '-m', 'gzip', '-d'
+            args = sys.executable, '-m', 'zlib_ng.gzip_ng', '-d'
             with Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE) as proc:
                 out, err = proc.communicate(bytes_io.getvalue())
 
@@ -809,7 +810,7 @@ class TestCommandLine(unittest.TestCase):
 
         with gzip.open(gzipname, mode='wb') as fp:
             fp.write(self.data)
-        rc, out, err = assert_python_ok('-m', 'gzip', '-d', gzipname)
+        rc, out, err = assert_python_ok('-m', 'zlib_ng.gzip_ng', '-d', gzipname)
 
         with open(os.path.join(TEMPDIR, "testgzip"), "rb") as gunziped:
             self.assertEqual(gunziped.read(), self.data)
@@ -820,14 +821,14 @@ class TestCommandLine(unittest.TestCase):
         self.assertEqual(err, b'')
 
     def test_decompress_infile_outfile_error(self):
-        rc, out, err = assert_python_failure('-m', 'gzip', '-d', 'thisisatest.out')
-        self.assertEqual(b"filename doesn't end in .gz: 'thisisatest.out'", err.strip())
+        rc, out, err = assert_python_failure('-m', 'zlib_ng.gzip_ng', '-d', 'thisisatest.out')
+        self.assertIn(b"filename doesn't end in .gz: 'thisisatest.out'", err.strip())
         self.assertEqual(rc, 1)
         self.assertEqual(out, b'')
 
     @create_and_remove_directory(TEMPDIR)
     def test_compress_stdin_outfile(self):
-        args = sys.executable, '-m', 'gzip'
+        args = sys.executable, '-m', 'zlib_ng.gzip_ng'
         with Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE) as proc:
             out, err = proc.communicate(self.data)
 
@@ -843,7 +844,7 @@ class TestCommandLine(unittest.TestCase):
         with open(local_testgzip, 'wb') as fp:
             fp.write(self.data)
 
-        rc, out, err = assert_python_ok('-m', 'gzip', local_testgzip)
+        rc, out, err = assert_python_ok('-m', 'zlib_ng.gzip_ng', local_testgzip)
 
         self.assertTrue(os.path.exists(gzipname))
         self.assertEqual(out, b'')
@@ -860,7 +861,7 @@ class TestCommandLine(unittest.TestCase):
                 with open(local_testgzip, 'wb') as fp:
                     fp.write(self.data)
 
-                rc, out, err = assert_python_ok('-m', 'gzip', compress_level, local_testgzip)
+                rc, out, err = assert_python_ok('-m', 'zlib_ng.gzip_ng', compress_level, local_testgzip)
 
                 self.assertTrue(os.path.exists(gzipname))
                 self.assertEqual(out, b'')
@@ -869,13 +870,13 @@ class TestCommandLine(unittest.TestCase):
                 self.assertFalse(os.path.exists(gzipname))
 
     def test_compress_fast_best_are_exclusive(self):
-        rc, out, err = assert_python_failure('-m', 'gzip', '--fast', '--best')
-        self.assertIn(b"error: argument --best: not allowed with argument --fast", err)
+        rc, out, err = assert_python_failure('-m', 'zlib_ng.gzip_ng', '--fast', '--best')
+        self.assertIn(b"error: argument -9/--best: not allowed with argument -1/--fast", err)
         self.assertEqual(out, b'')
 
     def test_decompress_cannot_have_flags_compression(self):
-        rc, out, err = assert_python_failure('-m', 'gzip', '--fast', '-d')
-        self.assertIn(b'error: argument -d/--decompress: not allowed with argument --fast', err)
+        rc, out, err = assert_python_failure('-m', 'zlib_ng.gzip_ng', '--fast', '-d')
+        self.assertIn(b'error: argument -d/--decompress: not allowed with argument -1/--fast', err)
         self.assertEqual(out, b'')
 
 
