@@ -15,9 +15,9 @@ import os
 import zlib
 from pathlib import Path
 
-from zlib_ng import zlib_ng, gzip_ng
-
 import pytest
+
+from zlib_ng import gzip_ng, zlib_ng
 
 DATA_DIR = Path(__file__).parent / "data"
 COMPRESSED_FILE = DATA_DIR / "test.fastq.gz"
@@ -98,8 +98,8 @@ def test_decompress_zlib_ng(data_size, level):
 def test_compress_compressobj(data_size, level, wbits, memLevel):
     data = DATA[:data_size]
     compressobj = zlib_ng.compressobj(level=level,
-                                        wbits=wbits,
-                                        memLevel=memLevel)
+                                      wbits=wbits,
+                                      memLevel=memLevel)
     compressed = compressobj.compress(data) + compressobj.flush()
     decompressed = zlib.decompress(compressed, wbits=wbits)
     assert data == decompressed

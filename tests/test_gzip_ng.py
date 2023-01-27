@@ -21,9 +21,9 @@ import zlib
 from gzip import FCOMMENT, FEXTRA, FHCRC, FNAME, FTEXT  # type: ignore
 from pathlib import Path
 
-from zlib_ng import gzip_ng
-
 import pytest
+
+from zlib_ng import gzip_ng
 
 DATA = b'This is a simple test with gzip_ng'
 COMPRESSED_DATA = gzip.compress(DATA)
@@ -94,7 +94,7 @@ def test_decompress_stdin_stdout(capsysbinary, level):
     assert out == DATA
 
 
-@pytest.mark.parametrize("level", [str(x) for x in range(1,10)])
+@pytest.mark.parametrize("level", [str(x) for x in range(1, 10)])
 def test_compress_stdin_stdout(capsysbinary, level):
     mock_stdin = io.BytesIO(DATA)
     sys.stdin = io.TextIOWrapper(mock_stdin)
