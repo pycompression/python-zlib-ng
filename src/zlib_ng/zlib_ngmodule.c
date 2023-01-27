@@ -1996,7 +1996,7 @@ PyInit_zlib_ng(void)
     Py_INCREF(ZlibDecompressorType_obj);
     PyModule_AddObject(m, "_ZlibDecompressor", ZlibDecompressorType_obj);
 
-    ZlibError = PyErr_NewException("zlib.error", NULL, NULL);
+    ZlibError = PyErr_NewException("zlib_ng.error", NULL, NULL);
     if (ZlibError == NULL) {
         return NULL; 
     } 
