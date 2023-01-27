@@ -1325,7 +1325,7 @@ zlib_ZlibDecompressor_decompress(ZlibDecompressor *self, PyObject *args, PyObjec
 
     PyObject *result = NULL;
     Py_buffer data = {NULL, NULL};
-    Py_ssize_t max_length = 0;
+    Py_ssize_t max_length = -1;
     if (!PyArg_ParseTupleAndKeywords(
             args, kwargs, format, keywords, &data, &max_length)) {
         return NULL;
