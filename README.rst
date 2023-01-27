@@ -32,7 +32,7 @@
 
 
 python-zlib-ng
-===========
+==============
 
 .. introduction start
 
