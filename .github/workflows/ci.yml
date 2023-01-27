@@ -63,8 +63,8 @@ jobs:
 #          - "pypy-3.9"
         os: ["ubuntu-latest"]
         include:
-#          - os: "macos-latest"
-#            python-version: 3.7
+          - os: "macos-latest"
+            python-version: 3.7
           - os: "windows-latest"
             python-version: 3.7
     steps:
@@ -81,7 +81,9 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1.6.0
         if: runner.os == 'Windows'
       - name: Install build dependencies (MacOS)
-        run: brew install make
+        run: brew install ninja
+        env:
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
         if: runner.os == 'macOS'
       - name: Run tests
         run: tox
