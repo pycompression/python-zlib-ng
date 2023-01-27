@@ -66,10 +66,12 @@ class BaseTest(unittest.TestCase):
         super().__init__(methodName)
 
     def setUp(self):
-        os.unlink(self.filename)
+        if os.path.exists(self.filename):
+            os.unlink(self.filename)
 
     def tearDown(self):
-        os.unlink(self.filename)
+        if os.path.exists(self.filename):
+            os.unlink(self.filename)
 
 
 class TestGzip(BaseTest):
