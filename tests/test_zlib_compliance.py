@@ -963,8 +963,11 @@ class ZlibDecompressorTest(unittest.TestCase):
     BAD_DATA = b"Not a valid deflate block"
     BIG_TEXT = DATA * ((128 * 1024 // len(DATA)) + 1)
     BIG_DATA = zlib.compress(BIG_TEXT)
+
     def test_Constructor(self):
-        self.assertRaises(TypeError, zlib._ZlibDecompressor, 42)
+        self.assertRaises(TypeError, zlib._ZlibDecompressor, "bla")
+        self.assertRaises(TypeError, zlib._ZlibDecompressor, -15, "bla")
+        self.assertRaises(TypeError, zlib._ZlibDecompressor, -15, b"bla", "bla")
 
     def testDecompress(self):
         zlibd = zlib._ZlibDecompressor()
