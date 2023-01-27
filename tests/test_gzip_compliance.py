@@ -27,8 +27,8 @@ import sys
 import tempfile
 import unittest
 from subprocess import PIPE, Popen
-from test.support import _4G, bigmemtest
-from test.support.script_helper import assert_python_ok, assert_python_failure
+from test.support import _4G, bigmemtest  # type: ignore
+from test.support.script_helper import assert_python_failure, assert_python_ok  # type: ignore  # noqa: E501
 
 from zlib_ng import gzip_ng as gzip
 
@@ -43,7 +43,6 @@ data2 = b"""/* zlibmodule.c -- gzip-compatible data compression */
 /* See http://www.gzip.org/zlib/
 /* See http://www.winimage.com/zLibDll for Windows */
 """
-
 
 TEMPDIR = tempfile.mkdtemp()
 
@@ -77,10 +76,10 @@ class BaseTest(unittest.TestCase):
 class TestGzip(BaseTest):
     def write_and_read_back(self, data, mode='b'):
         b_data = bytes(data)
-        with gzip.GzipFile(self.filename, 'w'+mode) as f:
-            l = f.write(data)
-        self.assertEqual(l, len(b_data))
-        with gzip.GzipFile(self.filename, 'r'+mode) as f:
+        with gzip.GzipFile(self.filename, 'w' + mode) as f:
+            out_length = f.write(data)
+        self.assertEqual(out_length, len(b_data))
+        with gzip.GzipFile(self.filename, 'r' + mode) as f:
             self.assertEqual(f.read(), b_data)
 
     def test_write(self):
@@ -115,7 +114,7 @@ class TestGzip(BaseTest):
     def test_write_memoryview(self):
         self.write_and_read_back(memoryview(data1 * 50))
         m = memoryview(bytes(range(256)))
-        data = m.cast('B', shape=[8,8,4])
+        data = m.cast('B', shape=[8, 8, 4])
         self.write_and_read_back(data)
 
     def test_write_bytearray(self):
@@ -142,7 +141,7 @@ class TestGzip(BaseTest):
         # Try reading.
         with gzip.GzipFile(self.filename, 'r') as f:
             d = f.read()
-        self.assertEqual(d, data1*50)
+        self.assertEqual(d, data1 * 50)
 
     def test_read1(self):
         self.test_write()
@@ -203,7 +202,7 @@ class TestGzip(BaseTest):
 
         with gzip.GzipFile(self.filename, 'rb') as f:
             d = f.read()
-        self.assertEqual(d, (data1*50) + (data2*15))
+        self.assertEqual(d, (data1 * 50) + (data2 * 15))
 
     def test_many_append(self):
         # Bug #1074261 was triggered when reading a file that contained
@@ -212,7 +211,7 @@ class TestGzip(BaseTest):
         with gzip.GzipFile(self.filename, 'wb', 9) as f:
             f.write(b'a')
         for i in range(0, 200):
-            with gzip.GzipFile(self.filename, "ab", 9) as f: # append
+            with gzip.GzipFile(self.filename, "ab", 9) as f:  # append
                 f.write(b'a')
 
         # Try reading the file
@@ -221,8 +220,9 @@ class TestGzip(BaseTest):
             while 1:
                 ztxt = zgfile.read(8192)
                 contents += ztxt
-                if not ztxt: break
-        self.assertEqual(contents, b'a'*201)
+                if not ztxt:
+                    break
+        self.assertEqual(contents, b'a' * 201)
 
     def test_exclusive_write(self):
         with gzip.GzipFile(self.filename, 'xb') as f:
@@ -251,7 +251,8 @@ class TestGzip(BaseTest):
             line_length = 0
             while 1:
                 L = f.readline(line_length)
-                if not L and line_length != 0: break
+                if not L and line_length != 0:
+                    break
                 self.assertTrue(len(L) <= line_length)
                 line_length = (line_length + 1) % 50
 
@@ -265,7 +266,8 @@ class TestGzip(BaseTest):
         with gzip.GzipFile(self.filename, 'rb') as f:
             while 1:
                 L = f.readlines(150)
-                if L == []: break
+                if L == []:
+                    break
 
     def test_seek_read(self):
         self.test_write()
@@ -275,10 +277,11 @@ class TestGzip(BaseTest):
             while 1:
                 oldpos = f.tell()
                 line1 = f.readline()
-                if not line1: break
+                if not line1:
+                    break
                 newpos = f.tell()
                 f.seek(oldpos)  # negative seek
-                if len(line1)>10:
+                if len(line1) > 10:
                     amount = 10
                 else:
                     amount = len(line1)
@@ -325,7 +328,7 @@ class TestGzip(BaseTest):
 
     def test_mtime(self):
         mtime = 123456789
-        with gzip.GzipFile(self.filename, 'w', mtime = mtime) as fWrite:
+        with gzip.GzipFile(self.filename, 'w', mtime=mtime) as fWrite:
             fWrite.write(data1)
         with gzip.GzipFile(self.filename) as fRead:
             self.assertTrue(hasattr(fRead, 'mtime'))
@@ -337,17 +340,17 @@ class TestGzip(BaseTest):
     def test_metadata(self):
         mtime = 123456789
 
-        with gzip.GzipFile(self.filename, 'w', mtime = mtime) as fWrite:
+        with gzip.GzipFile(self.filename, 'w', mtime=mtime) as fWrite:
             fWrite.write(data1)
 
         with open(self.filename, 'rb') as fRead:
             # see RFC 1952: http://www.faqs.org/rfcs/rfc1952.html
 
             idBytes = fRead.read(2)
-            self.assertEqual(idBytes, b'\x1f\x8b') # gzip ID
+            self.assertEqual(idBytes, b'\x1f\x8b')  # gzip ID
 
             cmByte = fRead.read(1)
-            self.assertEqual(cmByte, b'\x08') # deflate
+            self.assertEqual(cmByte, b'\x08')  # deflate
 
             try:
                 expectedname = os.path.basename(self.filename).encode(
@@ -361,13 +364,14 @@ class TestGzip(BaseTest):
             self.assertEqual(flagsByte, expectedflags)
 
             mtimeBytes = fRead.read(4)
-            self.assertEqual(mtimeBytes, struct.pack('<i', mtime)) # little-endian
+            self.assertEqual(mtimeBytes,
+                             struct.pack('<i', mtime))  # little-endian
 
             xflByte = fRead.read(1)
-            self.assertEqual(xflByte, b'\x02') # maximum compression
+            self.assertEqual(xflByte, b'\x02')  # maximum compression
 
             osByte = fRead.read(1)
-            self.assertEqual(osByte, b'\xff') # OS "unknown" (OS-independent)
+            self.assertEqual(osByte, b'\xff')  # OS "unknown" (OS-independent)
 
             # Since the FNAME flag is set, the zero-terminated filename follows.
             # RFC 1952 specifies that this is the name of the input file, if any.
@@ -380,7 +384,7 @@ class TestGzip(BaseTest):
             # Rather than process the compressed data, let's seek to the trailer.
             fRead.seek(os.stat(self.filename).st_size - 8)
 
-            crc32Bytes = fRead.read(4) # CRC32 of uncompressed data [data1]
+            crc32Bytes = fRead.read(4)  # CRC32 of uncompressed data [data1]
             self.assertEqual(crc32Bytes, b'\xaf\xd7d\x83')
 
             isizeBytes = fRead.read(4)
@@ -426,7 +430,7 @@ class TestGzip(BaseTest):
             self.fail("__enter__ on a closed file didn't raise an exception")
         try:
             with gzip.GzipFile(self.filename, "wb") as f:
-                1/0
+                1 / 0
         except ZeroDivisionError:
             pass
         else:
@@ -498,7 +502,7 @@ class TestGzip(BaseTest):
         # fileobj created with os.fdopen().
         fd = os.open(self.filename, os.O_WRONLY | os.O_CREAT)
         with os.fdopen(fd, "wb") as f:
-            with gzip.GzipFile(fileobj=f, mode="w") as g:
+            with gzip.GzipFile(fileobj=f, mode="w"):
                 pass
 
     def test_fileobj_mode(self):
@@ -551,7 +555,7 @@ class TestGzip(BaseTest):
         self.assertEqual(decomp.read(1), b'\0')
         max_decomp = 1 + io.DEFAULT_BUFFER_SIZE
         self.assertLessEqual(decomp._buffer.raw.tell(), max_decomp,
-            "Excessive amount of data was decompressed")
+                             "Excessive amount of data was decompressed")
 
     # Testing compress/decompress shortcut functions
 
@@ -570,8 +574,9 @@ class TestGzip(BaseTest):
                 with self.subTest(data=data, args=args):
                     datac = gzip.compress(data, *args, mtime=mtime)
                     self.assertEqual(type(datac), bytes)
-                    with gzip.GzipFile(fileobj=io.BytesIO(datac), mode="rb") as f:
-                        f.read(1) # to set mtime attribute
+                    with gzip.GzipFile(fileobj=io.BytesIO(datac),
+                                       mode="rb") as f:
+                        f.read(1)  # to set mtime attribute
                         self.assertEqual(f.mtime, mtime)
 
     def test_compress_correct_level(self):
@@ -579,7 +584,8 @@ class TestGzip(BaseTest):
         for mtime in (0, 42):
             with self.subTest(mtime=mtime):
                 nocompress = gzip.compress(data1, compresslevel=0, mtime=mtime)
-                yescompress = gzip.compress(data1, compresslevel=1, mtime=mtime)
+                yescompress = gzip.compress(data1, compresslevel=1,
+                                            mtime=mtime)
                 self.assertIn(data1, nocompress)
                 self.assertNotIn(data1, yescompress)
 
@@ -602,7 +608,7 @@ class TestGzip(BaseTest):
         self.assertRaises(EOFError, gzip.decompress, compressed_data[:-8])
 
     def test_read_truncated(self):
-        data = data1*50
+        data = data1 * 50
         # Drop the CRC (4 bytes) and file size (4 bytes).
         truncated = gzip.compress(data)[:-8]
         with gzip.GzipFile(fileobj=io.BytesIO(truncated)) as f:
@@ -769,9 +775,11 @@ class TestOpen(BaseTest):
     def test_newline(self):
         # Test with explicit newline (universal newline mode disabled).
         uncompressed = data1.decode("ascii") * 50
-        with gzip.open(self.filename, "wt", encoding="ascii", newline="\n") as f:
+        with gzip.open(self.filename, "wt", encoding="ascii",
+                       newline="\n") as f:
             f.write(uncompressed)
-        with gzip.open(self.filename, "rt", encoding="ascii", newline="\r") as f:
+        with gzip.open(self.filename, "rt", encoding="ascii",
+                       newline="\r") as f:
             self.assertEqual(f.readlines(), [uncompressed])
 
 
@@ -784,7 +792,9 @@ def create_and_remove_directory(directory):
                 return function(*args, **kwargs)
             finally:
                 shutil.rmtree(directory)
+
         return wrapper
+
     return decorator
 
 
@@ -810,7 +820,8 @@ class TestCommandLine(unittest.TestCase):
 
         with gzip.open(gzipname, mode='wb') as fp:
             fp.write(self.data)
-        rc, out, err = assert_python_ok('-m', 'zlib_ng.gzip_ng', '-d', gzipname)
+        rc, out, err = assert_python_ok('-m', 'zlib_ng.gzip_ng', '-d',
+                                        gzipname)
 
         with open(os.path.join(TEMPDIR, "testgzip"), "rb") as gunziped:
             self.assertEqual(gunziped.read(), self.data)
@@ -821,8 +832,10 @@ class TestCommandLine(unittest.TestCase):
         self.assertEqual(err, b'')
 
     def test_decompress_infile_outfile_error(self):
-        rc, out, err = assert_python_failure('-m', 'zlib_ng.gzip_ng', '-d', 'thisisatest.out')
-        self.assertIn(b"filename doesn't end in .gz: 'thisisatest.out'", err.strip())
+        rc, out, err = assert_python_failure('-m', 'zlib_ng.gzip_ng', '-d',
+                                             'thisisatest.out')
+        self.assertIn(b"filename doesn't end in .gz: 'thisisatest.out'",
+                      err.strip())
         self.assertEqual(rc, 1)
         self.assertEqual(out, b'')
 
@@ -844,7 +857,8 @@ class TestCommandLine(unittest.TestCase):
         with open(local_testgzip, 'wb') as fp:
             fp.write(self.data)
 
-        rc, out, err = assert_python_ok('-m', 'zlib_ng.gzip_ng', local_testgzip)
+        rc, out, err = assert_python_ok('-m', 'zlib_ng.gzip_ng',
+                                        local_testgzip)
 
         self.assertTrue(os.path.exists(gzipname))
         self.assertEqual(out, b'')
@@ -861,7 +875,8 @@ class TestCommandLine(unittest.TestCase):
                 with open(local_testgzip, 'wb') as fp:
                     fp.write(self.data)
 
-                rc, out, err = assert_python_ok('-m', 'zlib_ng.gzip_ng', compress_level, local_testgzip)
+                rc, out, err = assert_python_ok('-m', 'zlib_ng.gzip_ng',
+                                                compress_level, local_testgzip)
 
                 self.assertTrue(os.path.exists(gzipname))
                 self.assertEqual(out, b'')
@@ -870,13 +885,19 @@ class TestCommandLine(unittest.TestCase):
                 self.assertFalse(os.path.exists(gzipname))
 
     def test_compress_fast_best_are_exclusive(self):
-        rc, out, err = assert_python_failure('-m', 'zlib_ng.gzip_ng', '--fast', '--best')
-        self.assertIn(b"error: argument -9/--best: not allowed with argument -1/--fast", err)
+        rc, out, err = assert_python_failure('-m', 'zlib_ng.gzip_ng', '--fast',
+                                             '--best')
+        self.assertIn(
+            b"error: argument -9/--best: not allowed with argument -1/--fast",
+            err)
         self.assertEqual(out, b'')
 
     def test_decompress_cannot_have_flags_compression(self):
-        rc, out, err = assert_python_failure('-m', 'zlib_ng.gzip_ng', '--fast', '-d')
-        self.assertIn(b'error: argument -d/--decompress: not allowed with argument -1/--fast', err)
+        rc, out, err = assert_python_failure('-m', 'zlib_ng.gzip_ng', '--fast',
+                                             '-d')
+        self.assertIn(
+            b'error: argument -d/--decompress: not allowed with argument -1/--fast',
+            err)
         self.assertEqual(out, b'')
 
 

@@ -129,10 +129,10 @@ setup(
     zip_safe=False,
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    package_data={'zlib_ng': ['*.pyi', 'py.typed',
-                           # Include zlib-ng LICENSE and other relevant files
-                           # with the binary distribution.
-                           'zlib-ng/LICENSE.md', 'zlib-ng/README.md']},
+    package_data={'zlib_ng': [
+        '*.pyi', 'py.typed',
+        # Include zlib-ng LICENSE and other relevant files with the binary distribution.
+        'zlib-ng/LICENSE.md', 'zlib-ng/README.md']},
     url="https://github.com/pycompression/python-zlib-ng",
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",
