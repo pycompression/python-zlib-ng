@@ -105,10 +105,11 @@ def build_zlib_ng():
     # Add -fPIC flag to allow static compilation
     run_args = dict(cwd=build_dir, env=build_env)
     subprocess.run(["cmake", build_dir], **run_args)
+    # Do not create test suite and do not perform tests to shorten build times.
+    # There is no need when stable releases of zlib-ng are used.
     subprocess.run(["cmake", "--build", build_dir, "--config", "Release",
-                    "-v", "-j", str(cpu_count)], **run_args)
-    subprocess.run(["ctest", "--verbose", "-C", "Release", "-j", str(cpu_count)],
-                   **run_args)
+                    "--target", "zlibstatic",
+                    "-j", str(cpu_count)], **run_args)
     if BUILD_CACHE:
         BUILD_CACHE_FILE.write_text(build_dir)
     return build_dir
