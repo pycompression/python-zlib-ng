@@ -100,7 +100,7 @@ def open(filename, mode="rb", compresslevel=_COMPRESS_LEVEL_TRADEOFF,
 
 
 class GzipNGFile(gzip.GzipFile):
-    """The IGzipFile class simulates most of the methods of a file object with
+    """The GzipNGFile class simulates most of the methods of a file object with
     the exception of the truncate() method.
 
     This class only supports opening files in binary mode. If you need to open
@@ -109,7 +109,7 @@ class GzipNGFile(gzip.GzipFile):
     def __init__(self, filename=None, mode=None,
                  compresslevel=_COMPRESS_LEVEL_BEST,
                  fileobj=None, mtime=None):
-        """Constructor for the IGzipFile class.
+        """Constructor for the GzipNGFile class.
 
         At least one of fileobj and filename must be given a
         non-trivial value.
@@ -153,16 +153,16 @@ class GzipNGFile(gzip.GzipFile):
 
     def __repr__(self):
         s = repr(self.fileobj)
-        return '<igzip ' + s[1:-1] + ' ' + hex(id(self)) + '>'
+        return '<gzip_ng ' + s[1:-1] + ' ' + hex(id(self)) + '>'
 
     def write(self, data):
         self._check_not_closed()
         if self.mode != WRITE:
             import errno
-            raise OSError(errno.EBADF, "write() on read-only IGzipFile object")
+            raise OSError(errno.EBADF, "write() on read-only GzipNGFile object")
 
         if self.fileobj is None:
-            raise ValueError("write() on closed IGzipFile object")
+            raise ValueError("write() on closed GzipNGFile object")
 
         if isinstance(data, bytes):
             length = len(data)
@@ -397,7 +397,7 @@ def _argument_parser():
                              "timestamp")
     parser.add_argument("-f", "--force", action="store_true",
                         help="Overwrite output without prompting")
-    # -b flag not taken by either gzip or igzip. Hidden attribute.
+    # -b flag not taken by gzip. Hidden attribute.
     parser.add_argument("-b", "--buffer-size",
                         default=READ_BUFFER_SIZE, type=int,
                         help=argparse.SUPPRESS)
