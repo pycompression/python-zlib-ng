@@ -188,11 +188,12 @@ jobs:
         env:
           CIBW_SKIP: "*-win32 *-manylinux_i686"  # Skip 32 bit
           CIBW_ARCHS_LINUX: ${{ matrix.cibw_archs_linux }}
-          # Simple tests that requires the project to be build correctly
           CIBW_TEST_REQUIRES: "pytest"
+          # Simple tests that requires the project to be build correctly
           CIBW_TEST_COMMAND: >-
             pytest {project}/tests/test_zlib_compliance.py 
             {project}/tests/test_gzip_compliance.py
+            {project}/tests/test_gzip_ng.py
           CIBW_ENVIRONMENT_LINUX: >-
             PYTHON_ZLIB_NG_BUILD_CACHE=True
             PYTHON_ZLIB_NG_BUILD_CACHE_FILE=/tmp/build_cache
