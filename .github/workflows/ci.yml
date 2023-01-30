@@ -164,23 +164,19 @@ jobs:
         include:
           - os: "ubuntu-latest"
             cibw_archs_linux: "aarch64"
-            cibw_before_all_linux: "true"  # The true command exits with 0
     steps:
       - uses: actions/checkout@v2.3.4
         with:
           submodules: recursive
       - uses: actions/setup-python@v2
         name: Install Python
-      - name: Install cibuildwheel twine wheel
+      - name: Install cibuildwheel twine build
         run: python -m pip install cibuildwheel twine wheel
       - name: Install build dependencies (Macos)
-        run: brew install nasm automake autoconf
+        run: brew install make
         if: runner.os == 'macOS'
       - name: Set MSVC developer prompt
         uses: ilammy/msvc-dev-cmd@v1.6.0
-        if: runner.os == 'Windows'
-      - name: Install nasm (Windows)
-        uses: ilammy/setup-nasm@v1.2.0
         if: runner.os == 'Windows'
       - name: Set up QEMU
         if: ${{runner.os == 'Linux' && matrix.cibw_archs_linux == 'aarch64'}}
@@ -192,14 +188,12 @@ jobs:
         env:
           CIBW_SKIP: "*-win32 *-manylinux_i686"  # Skip 32 bit
           CIBW_ARCHS_LINUX: ${{ matrix.cibw_archs_linux }}
-          CIBW_BEFORE_ALL_LINUX: ${{ matrix.cibw_before_all_linux }}
           # Fully test the build wheels again.
           CIBW_TEST_REQUIRES: "pytest"
           # Simple test that requires the project to be build correctly
           CIBW_TEST_COMMAND: >-
-            pytest {project}/tests/test_igzip.py
+            pytest {project}/tests/test_gzip_ng.py
             {project}/tests/test_compat.py
-            {project}/tests/test_igzip_lib.py
           CIBW_ENVIRONMENT_LINUX: >-
             PYTHON_ZLIB_NG_BUILD_CACHE=True
             PYTHON_ZLIB_NG_BUILD_CACHE_FILE=/tmp/build_cache
@@ -213,8 +207,7 @@ jobs:
             CFLAGS="-g0 -DNDEBUG"
       - name: Build sdist
         if: ${{runner.os == 'Linux' && matrix.cibw_archs_linux == 'x86_64'}}
-        run: |
-            pip install build
+        run:
             python -m build --sdist
       - uses: actions/upload-artifact@v2
         with:
