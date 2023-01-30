@@ -42,10 +42,11 @@ by providing Python bindings for the ISA-L library.
 This package provides Python bindings for the `zlib-ng
 <https://github.com/zlib-ng/zlib-ng>`_ library.
 
-``python-zlib-ng`` provides the bindings by offering three modules:
+``python-zlib-ng`` provides the bindings by offering two modules:
 
 + ``zlib_ng``: A drop-in replacement for the zlib module that uses zlib-ng to
   accelerate its performance.
+
 + ``gzip_ng``: A drop-in replacement for the gzip module that uses ``zlib_ng``
   instead of ``zlib`` to perform its compression and checksum tasks, which
   improves performance.
@@ -89,6 +90,28 @@ Installation
 Installation is supported on Linux, Windows and MacOS. For more advanced
 installation options check the `documentation
 <https://python-zlib-ng.readthedocs.io/en/stable/index.html#installation>`_.
+
+python-zlib-ng as a dependency in your project
+----------------------------------------------
+
+.. dependency start
+
+zlib-ng supports numerous platforms but not all of these have pre-built wheels
+available. To prevent your users from running into issues when installing
+your project please list a python-zlib-ng dependency as follows.
+
+``setup.cfg``::
+
+    install_requires =
+        zlib-ng; platform.machine == "x86_64" or platform.machine == "AMD64"
+
+``setup.py``::
+
+    extras_require={
+        ":platform.machine == 'x86_64' or platform.machine == 'AMD64'": ['zlib-ng']
+    },
+
+.. dependency end
 
 .. _differences-with-zlib-and-gzip-modules:
 
