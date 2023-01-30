@@ -11,7 +11,6 @@
 
 import gzip
 import itertools
-import os
 import zlib
 from pathlib import Path
 
@@ -46,7 +45,22 @@ if hasattr(zlib, "Z_FIXED"):
     ZLIB_STRATEGIES.append(zlib.Z_FIXED)
 
 
-DYNAMICALLY_LINKED = os.getenv("PYTHON_ISAL_LINK_DYNAMIC") is not None
+def limited_zlib_tests(strategies=ZLIB_STRATEGIES):
+    """
+    Test all combinations of memlevel compression level and wbits, but
+    only for the default strategy. Test other strategies with default settings.
+    """
+    DEFAULT_DATA_SIZE = 128 * 1024
+    compression_levels = range(-1, 10)
+    memory_levels = list(range(1, 10))
+    for compresslevel in compression_levels:
+        for wbits in WBITS_RANGE:
+            for memlevel in memory_levels:
+                yield (DEFAULT_DATA_SIZE, compresslevel, wbits, memlevel,
+                       zlib.Z_DEFAULT_STRATEGY)
+    for strategy in strategies:
+        yield (DEFAULT_DATA_SIZE, -1, zlib.MAX_WBITS, zlib.DEF_MEM_LEVEL,
+               strategy)
 
 
 @pytest.mark.parametrize(["data_size", "value"],
@@ -89,9 +103,7 @@ def test_decompress_zlib(data_size, level):
 
 
 @pytest.mark.parametrize(["data_size", "level", "wbits", "memLevel", "strategy"],
-                         itertools.product([128 * 1024], range(10),
-                                           WBITS_RANGE, range(1, 10),
-                                           ZLIB_STRATEGIES))
+                         limited_zlib_tests(ZLIB_STRATEGIES))
 def test_decompress_wbits(data_size, level, wbits, memLevel, strategy):
     data = DATA[:data_size]
     compressobj = zlib.compressobj(level=level, wbits=wbits, memLevel=memLevel,
@@ -119,9 +131,7 @@ def test_decompress_zlib_ng(data_size, level, wbits):
 
 
 @pytest.mark.parametrize(["data_size", "level", "wbits", "memLevel", "strategy"],
-                         itertools.product([128 * 1024], range(1, 10),
-                                           WBITS_RANGE, range(1, 10),
-                                           ZLIBNG_STRATEGIES))
+                         limited_zlib_tests(ZLIBNG_STRATEGIES))
 def test_compress_compressobj(data_size, level, wbits, memLevel, strategy):
     data = DATA[:data_size]
     compressobj = zlib_ng.compressobj(level=level,
@@ -141,9 +151,7 @@ def test_compress_compressobj(data_size, level, wbits, memLevel, strategy):
 
 
 @pytest.mark.parametrize(["data_size", "level", "wbits", "memLevel", "strategy"],
-                         itertools.product([128 * 1024], range(1, 10),
-                                           WBITS_RANGE, range(1, 10),
-                                           ZLIB_STRATEGIES))
+                         limited_zlib_tests(ZLIB_STRATEGIES))
 def test_decompress_decompressobj(data_size, level, wbits, memLevel, strategy):
     data = DATA[:data_size]
     compressobj = zlib.compressobj(level=level, wbits=wbits, memLevel=memLevel,
