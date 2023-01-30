@@ -69,7 +69,7 @@ class BuildZlibNGExt(build_ext):
                     os.path.join(build_dir, "libz-ng.a")]
             elif SYSTEM_IS_WINDOWS:
                 ext.extra_objects = [
-                    os.path.join(build_dir, "zlib-ng.lib")]
+                    os.path.join(build_dir, "Release", "zlibstatic-ng.lib")]
             else:
                 raise NotImplementedError(
                     f"Unsupported platform: {sys.platform}")
@@ -117,7 +117,7 @@ def build_zlib_ng():
 
 setup(
     name="zlib-ng",
-    version="0.1.0",
+    version="0.1.0-dev",
     description="Drop-in replacement for zlib and gzip modules using zlib-ng",
     author="Leiden University Medical Center",
     author_email="r.h.p.vorderman@lumc.nl",  # A placeholder for now
@@ -129,10 +129,10 @@ setup(
     zip_safe=False,
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    package_data={'zlib_ng': ['*.pyi', 'py.typed',
-                           # Include zlib-ng LICENSE and other relevant files
-                           # with the binary distribution.
-                           'zlib-ng/LICENSE.md', 'zlib-ng/README.md']},
+    package_data={'zlib_ng': [
+        '*.pyi', 'py.typed',
+        # Include zlib-ng LICENSE and other relevant files with the binary distribution.
+        'zlib-ng/LICENSE.md', 'zlib-ng/README.md']},
     url="https://github.com/pycompression/python-zlib-ng",
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",

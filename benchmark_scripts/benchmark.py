@@ -6,7 +6,7 @@ import zlib
 from pathlib import Path
 from typing import Dict
 
-from zlib_ng import zlib_ng, gzip_ng  # noqa: F401 used in timeit strings
+from zlib_ng import gzip_ng, zlib_ng  # noqa: F401 used in timeit strings
 
 DATA_DIR = Path(__file__).parent.parent / "tests" / "data"
 COMPRESSED_FILE = DATA_DIR / "test.fastq.gz"
@@ -43,7 +43,7 @@ def show_sizes():
         print(name + "\t" + "\t".join(rel_sizes))
 
     print("zlib_ng sizes")
-    print("name\t" + "\t".join(str(level) for level in range(-1,10)))
+    print("name\t" + "\t".join(str(level) for level in range(-1, 10)))
     for name, data_block in sizes.items():
         orig_size = max(len(data_block), 1)
         rel_sizes = (

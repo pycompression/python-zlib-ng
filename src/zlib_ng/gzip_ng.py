@@ -2,7 +2,7 @@
 # 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023
 # Python Software Foundation; All Rights Reserved
 
-# This file is part of python-isal which is distributed under the
+# This file is part of python-zlib-ng which is distributed under the
 # PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2.
 
 # This file uses code from CPython's Lib/gzip.py after backported changes from
@@ -100,16 +100,17 @@ def open(filename, mode="rb", compresslevel=_COMPRESS_LEVEL_TRADEOFF,
 
 
 class GzipNGFile(gzip.GzipFile):
-    """The IGzipFile class simulates most of the methods of a file object with
+    """The GzipNGFile class simulates most of the methods of a file object with
     the exception of the truncate() method.
 
     This class only supports opening files in binary mode. If you need to open
     a compressed file in text mode, use the gzip.open() function.
     """
+
     def __init__(self, filename=None, mode=None,
                  compresslevel=_COMPRESS_LEVEL_BEST,
                  fileobj=None, mtime=None):
-        """Constructor for the IGzipFile class.
+        """Constructor for the GzipNGFile class.
 
         At least one of fileobj and filename must be given a
         non-trivial value.
@@ -143,26 +144,26 @@ class GzipNGFile(gzip.GzipFile):
         super().__init__(filename, mode, compresslevel, fileobj, mtime)
         if self.mode == WRITE:
             self.compress = zlib_ng.compressobj(compresslevel,
-                                                  zlib_ng.DEFLATED,
-                                                  -zlib_ng.MAX_WBITS,
-                                                  zlib_ng.DEF_MEM_LEVEL,
-                                                  0)
+                                                zlib_ng.DEFLATED,
+                                                -zlib_ng.MAX_WBITS,
+                                                zlib_ng.DEF_MEM_LEVEL,
+                                                0)
         if self.mode == READ:
             raw = _GzipNGReader(self.fileobj)
             self._buffer = io.BufferedReader(raw)
 
     def __repr__(self):
         s = repr(self.fileobj)
-        return '<igzip ' + s[1:-1] + ' ' + hex(id(self)) + '>'
+        return '<gzip_ng ' + s[1:-1] + ' ' + hex(id(self)) + '>'
 
     def write(self, data):
         self._check_not_closed()
         if self.mode != WRITE:
             import errno
-            raise OSError(errno.EBADF, "write() on read-only IGzipFile object")
+            raise OSError(errno.EBADF, "write() on read-only GzipNGFile object")
 
         if self.fileobj is None:
-            raise ValueError("write() on closed IGzipFile object")
+            raise ValueError("write() on closed GzipNGFile object")
 
         if isinstance(data, bytes):
             length = len(data)
@@ -286,21 +287,21 @@ def _read_gzip_header(fp):
         # Read and discard a null-terminated string containing the filename
         while True:
             s = fp.read(1)
-            if not s or s==b'\000':
+            if not s or s == b'\000':
                 break
     if flag & FCOMMENT:
         # Read and discard a null-terminated string containing a comment
         while True:
             s = fp.read(1)
-            if not s or s==b'\000':
+            if not s or s == b'\000':
                 break
     if flag & FHCRC:
-        _read_exact(fp, 2)     # Read & discard the 16-bit header CRC
+        _read_exact(fp, 2)  # Read & discard the 16-bit header CRC
     return last_mtime
 
 
 def _create_simple_gzip_header(compresslevel: int,
-                               mtime = None) -> bytes:
+                               mtime=None) -> bytes:
     """
     Write a simple gzip header with no extra fields.
     :param compresslevel: Compresslevel used to determine the xfl bytes.
@@ -397,7 +398,7 @@ def _argument_parser():
                              "timestamp")
     parser.add_argument("-f", "--force", action="store_true",
                         help="Overwrite output without prompting")
-    # -b flag not taken by either gzip or igzip. Hidden attribute.
+    # -b flag not taken by gzip. Hidden attribute.
     parser.add_argument("-b", "--buffer-size",
                         default=READ_BUFFER_SIZE, type=int,
                         help=argparse.SUPPRESS)
@@ -445,7 +446,7 @@ def main():
         else:
             gzip_file_kwargs = {"filename": out_filepath}
         out_file = GzipNGFile(mode="wb", fileobj=out_buffer,
-                             compresslevel=compresslevel, **gzip_file_kwargs)
+                              compresslevel=compresslevel, **gzip_file_kwargs)
     else:
         if args.file:
             in_file = open(args.file, mode="rb")

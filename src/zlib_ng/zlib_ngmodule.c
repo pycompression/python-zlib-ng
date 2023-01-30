@@ -1531,7 +1531,7 @@ zlib_crc32(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 }
 
 PyDoc_STRVAR(zlib_compress__doc__,
-"compress($module, data, /, level=ISAL_DEFAULT_COMPRESSION, wbits=MAX_WBITS)\n"
+"compress($module, data, /, level=Z_DEFAULT_COMPRESSION, wbits=MAX_WBITS)\n"
 "--\n"
 "\n"
 "Returns a bytes object containing compressed data.\n"
@@ -1606,7 +1606,7 @@ zlib_decompress(PyObject *module, PyObject *args, PyObject *kwargs)
 
 
 PyDoc_STRVAR(zlib_compressobj__doc__,
-"compressobj($module, /, level=ISAL_DEFAULT_COMPRESSION, method=DEFLATED,\n"
+"compressobj($module, /, level=Z_DEFAULT_COMPRESSION, method=DEFLATED,\n"
 "            wbits=MAX_WBITS, memLevel=DEF_MEM_LEVEL,\n"
 "            strategy=Z_DEFAULT_STRATEGY, zdict=None)\n"
 "--\n"
@@ -1912,7 +1912,7 @@ static PyMemberDef ZlibDecompressor_members[] = {
 };
 
 static PyTypeObject Comptype = {
-    .tp_name = "zlib_ng.Compress",
+    .tp_name = "zlib_ng._Compress",
     .tp_basicsize = sizeof(compobject),
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_dealloc = (destructor)Comp_dealloc,
@@ -1920,7 +1920,7 @@ static PyTypeObject Comptype = {
 };
 
 static PyTypeObject Decomptype = {
-    .tp_name = "zlib_ng.Decompress",
+    .tp_name = "zlib_ng._Decompress",
     .tp_basicsize = sizeof(compobject),
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_dealloc = (destructor)Decomp_dealloc,
@@ -1986,9 +1986,15 @@ PyInit_zlib_ng(void)
     if (PyType_Ready(&Comptype) < 0) {
         return NULL;
     }
+    PyObject *Comptype_obj = (PyObject *)&Comptype;
+    Py_INCREF(Comptype_obj);
+    PyModule_AddObject(m, "_Compress", Comptype_obj);
     if (PyType_Ready(&Decomptype) < 0) {
         return NULL;
     }
+    PyObject *Decomptype_obj = (PyObject *)&Decomptype;
+    Py_INCREF(Decomptype_obj);
+    PyModule_AddObject(m, "_Decompress", Decomptype_obj);
     if (PyType_Ready(&ZlibDecompressorType) < 0) {
         return NULL;
     }
