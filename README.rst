@@ -68,7 +68,7 @@ The python-zlib-ng modules can be imported as follows
     from zlib_ng import zlib_ng
     from zlib_ng import gzip_ng
 
-``zlib_ng`` and `gzip`` are meant to be used as drop in replacements so
+``zlib_ng`` and ``gzip_ng`` are meant to be used as drop in replacements so
 their api and functions are the same as the stdlib's modules.
 
 A full API documentation can be found on `our readthedocs page
@@ -99,9 +99,9 @@ Differences with zlib and gzip modules
 
 + Compression level 1 zlib_ng has a much worse compression rate than that in
   zlib. For other compression levels zlib_ng compresses better.
-+ Compression level 1 does not apply requested `wbits` correctly. For example
-  compressing with `zlib_ng.compress(data, level=1, wbits=-9)` results in
-  data that cannot be decompressed with `zlib_ng.decompress(data, wbits=-9)`
++ Compression level 1 does not apply requested ``wbits`` correctly. For example
+  compressing with ``zlib_ng.compress(data, level=1, wbits=-9)`` results in
+  data that cannot be decompressed with ``zlib_ng.decompress(data, wbits=-9)``
   as this will throw an error mentioning invalid window sizes. This is a
   bug in the included zlib-ng 2.0.6.
 + ``gzip_ng.open`` returns a class ``GzipNGFile`` instead of ``GzipFile``. Since
