@@ -37,7 +37,7 @@ python-zlib-ng
 .. introduction start
 
 Faster zlib and gzip compatible compression and decompression
-by providing Python bindings for the ISA-L library.
+by providing Python bindings for the zlib-ng library.
 
 This package provides Python bindings for the `zlib-ng
 <https://github.com/zlib-ng/zlib-ng>`_ library.
