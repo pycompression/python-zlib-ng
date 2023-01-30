@@ -69,7 +69,7 @@ class BuildZlibNGExt(build_ext):
                     os.path.join(build_dir, "libz-ng.a")]
             elif SYSTEM_IS_WINDOWS:
                 ext.extra_objects = [
-                    os.path.join(build_dir, "zlib-ng.lib")]
+                    os.path.join(build_dir, "Release", "zlibstatic-ng.lib")]
             else:
                 raise NotImplementedError(
                     f"Unsupported platform: {sys.platform}")
