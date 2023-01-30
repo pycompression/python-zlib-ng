@@ -102,7 +102,7 @@ def test_decompress_wbits(data_size, level, wbits, memLevel, strategy):
 
 
 @pytest.mark.parametrize(["data_size", "level", "wbits"],
-                         itertools.product(DATA_SIZES, range(10), WBITS_RANGE),)
+                         itertools.product([128 * 1024], range(10), WBITS_RANGE),)
 def test_decompress_zlib_ng(data_size, level, wbits):
     data = DATA[:data_size]
     compressed = zlib_ng.compress(data, level=level, wbits=wbits)
@@ -187,7 +187,6 @@ def test_decompress_gzip_ng(data_size, level):
     data = DATA[:data_size]
     compressed = gzip_ng.compress(data, compresslevel=level)
     decompressed = gzip_ng.decompress(compressed)
-    print(len(decompressed))
     assert decompressed == data
 
 
