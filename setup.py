@@ -149,7 +149,7 @@ setup(
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Programming Language :: C",
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Topic :: System :: Archiving :: Compression",
         "License :: OSI Approved :: Python Software Foundation License",
         "Operating System :: POSIX :: Linux",
