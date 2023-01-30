@@ -5,7 +5,7 @@
 # This file is part of python-zlib-ng which is distributed under the
 # PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2.
 
-"""Test script for the isal_zlib module.
+"""Test script for the zlib_ng module.
 Adapted from test_zlib.py in CPython's lib/test directory.
 Python software license applies:
 https://github.com/python/cpython/blob/master/LICENSE
