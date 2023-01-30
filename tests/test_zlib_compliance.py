@@ -186,7 +186,7 @@ class BaseCompressTestCase(object):
         # Generate 10 MiB worth of random, and expand it by repeating it.
         # The assumption is that zlib's memory is not big enough to exploit
         # such spread out redundancy.
-        data = random.randbytes(_1M * 10)
+        data = os.urandom(_1M * 10)
         data = data * (size // len(data) + 1)
         try:
             compress_func(data)
@@ -545,6 +545,8 @@ class CompressObjectTestCase(BaseCompressTestCase, unittest.TestCase):
                 # others might simply have a single RNG
                 gen = random
         gen.seed(1)
+        if not hasattr(gen, "randbytes"):  # Python 3.7 workaround.
+            setattr(gen, "randbytes", lambda x: os.urandom(x))
         data = gen.randbytes(17 * 1024)
 
         # compress, sync-flush, and decompress
@@ -1020,7 +1022,7 @@ class ZlibDecompressorTest(unittest.TestCase):
     def testDecompress4G(self, size):
         # "Test zlib._ZlibDecompressor.decompress() with >4GiB input"
         blocksize = 10 * 1024 * 1024
-        block = random.randbytes(blocksize)
+        block = os.urandom(blocksize)
         try:
             data = block * (size // blocksize + 1)
             compressed = zlib.compress(data)
