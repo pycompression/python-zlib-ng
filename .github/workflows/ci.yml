@@ -190,8 +190,8 @@ jobs:
           CIBW_ARCHS_LINUX: ${{ matrix.cibw_archs_linux }}
           # Simple tests that requires the project to be build correctly
           CIBW_TEST_COMMAND: >-
-            python -m unittest tests/test_zlib_compliance.py 
-            tests/test_gzip_compliance.py
+            python -m unittest {project}/tests/test_zlib_compliance.py 
+            {project}/tests/test_gzip_compliance.py
           CIBW_ENVIRONMENT_LINUX: >-
             PYTHON_ZLIB_NG_BUILD_CACHE=True
             PYTHON_ZLIB_NG_BUILD_CACHE_FILE=/tmp/build_cache
