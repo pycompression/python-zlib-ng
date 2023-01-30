@@ -2,29 +2,37 @@
 # 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022
 # Python Software Foundation; All Rights Reserved
 
-# This file is part of python-isal which is distributed under the
+# This file is part of python-zlib-ng which is distributed under the
 # PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2.
 
+MAX_WBITS: int
+DEFLATED: int
+DEF_MEM_LEVEL: int
+DEF_BUF_SIZE: int
+
+Z_NO_COMPRESSION: int
 Z_BEST_SPEED: int
 Z_BEST_COMPRESSION: int
 Z_DEFAULT_COMPRESSION: int
 
-DEF_BUF_SIZE: int
-DEF_MEM_LEVEL: int
-MAX_WBITS: int
-
-DEFLATED: int
-
-Z_DEFAULT_STRATEGY: int
-Z_RLE: int
-Z_HUFFMAN_ONLY: int
 Z_FILTERED: int
+Z_HUFFMAN_ONLY: int
+Z_RLE: int
 Z_FIXED: int
+Z_DEFAULT_STRATEGY: int
 
 Z_NO_FLUSH: int
+Z_PARTIAL_FLUSH: int
 Z_SYNC_FLUSH: int
 Z_FULL_FLUSH: int
 Z_FINISH: int
+Z_BLOCK: int
+Z_TREES: int
+
+ZLIBNG_VERSION: int
+ZLIBNG_RUNTIME_VERSION: int
+ZLIB_VERSION: int
+ZLIB_RUNTIME_VERSION: int
 
 error: Exception
 
