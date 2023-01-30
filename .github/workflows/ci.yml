@@ -190,9 +190,18 @@ jobs:
           CIBW_ARCHS_LINUX: ${{ matrix.cibw_archs_linux }}
           CIBW_TEST_REQUIRES: "pytest"
           # Simple tests that requires the project to be build correctly
-          CIBW_TEST_COMMAND: >-
+          CIBW_TEST_COMMAND_LINUX: >-
             pytest {project}/tests/test_zlib_compliance.py 
             {project}/tests/test_gzip_compliance.py
+            {project}/tests/test_gzip_ng.py
+          CIBW_TEST_COMMAND_MACOS: >-
+            pytest {project}/tests/test_zlib_compliance.py 
+            {project}/tests/test_gzip_compliance.py
+            {project}/tests/test_gzip_ng.py
+          # Windows does not have the test module in the included python.
+          # Run compatibility tests instead.
+          CIBW_TEST_COMMAND_WINDOWS: >-
+            pytest {project}/tests/test_compat.py
             {project}/tests/test_gzip_ng.py
           CIBW_ENVIRONMENT_LINUX: >-
             PYTHON_ZLIB_NG_BUILD_CACHE=True
