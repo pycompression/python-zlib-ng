@@ -171,7 +171,7 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
       - name: Install cibuildwheel twine build
-        run: python -m pip install cibuildwheel twine wheel
+        run: python -m pip install cibuildwheel twine build
       - name: Install build dependencies (Macos)
         run: brew install make
         if: runner.os == 'macOS'
