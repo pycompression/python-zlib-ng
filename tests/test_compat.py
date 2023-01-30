@@ -35,6 +35,17 @@ SEEDS = [-INT_OVERFLOW, -3, -1, 0, 1, INT_OVERFLOW] + [
 # Wbits for ZLIB compression, GZIP compression, and RAW compressed streams
 WBITS_RANGE = list(range(9, 16)) + list(range(25, 32)) + list(range(-15, -8))
 
+ZLIBNG_STRATEGIES = (zlib_ng.Z_DEFAULT_STRATEGY, zlib_ng.Z_FILTERED,
+                     zlib_ng.Z_HUFFMAN_ONLY, zlib_ng.Z_RLE, zlib_ng.Z_FIXED)
+
+ZLIB_STRATEGIES = [zlib.Z_DEFAULT_STRATEGY, zlib.Z_FILTERED,
+                   zlib.Z_HUFFMAN_ONLY]
+if hasattr(zlib, "Z_RLE"):
+    ZLIB_STRATEGIES.append(zlib.Z_RLE)
+if hasattr(zlib, "Z_FIXED"):
+    ZLIB_STRATEGIES.append(zlib.Z_FIXED)
+
+
 DYNAMICALLY_LINKED = os.getenv("PYTHON_ISAL_LINK_DYNAMIC") is not None
 
 
@@ -52,12 +63,12 @@ def test_adler32(data_size, value):
     assert zlib.adler32(data, value) == zlib_ng.adler32(data, value)
 
 
-@pytest.mark.parametrize(["data_size", "level"],
-                         itertools.product(DATA_SIZES, range(10)))
-def test_compress(data_size, level):
+@pytest.mark.parametrize(["data_size", "level", "wbits"],
+                         itertools.product(DATA_SIZES, range(10), WBITS_RANGE))
+def test_compress(data_size, level, wbits):
     data = DATA[:data_size]
-    compressed = zlib_ng.compress(data, level=level)
-    assert zlib.decompress(compressed) == data
+    compressed = zlib_ng.compress(data, level=level, wbits=wbits)
+    assert zlib.decompress(compressed, wbits) == data
 
 
 @pytest.mark.parametrize(["data_size", "level"],
@@ -69,48 +80,51 @@ def test_decompress_zlib(data_size, level):
     assert decompressed == data
 
 
-@pytest.mark.parametrize(["data_size", "level", "wbits", "memLevel"],
+@pytest.mark.parametrize(["data_size", "level", "wbits", "memLevel", "strategy"],
                          itertools.product([128 * 1024], range(10),
-                                           WBITS_RANGE, range(1, 10)))
-def test_decompress_wbits(data_size, level, wbits, memLevel):
+                                           WBITS_RANGE, range(1, 10),
+                                           ZLIB_STRATEGIES))
+def test_decompress_wbits(data_size, level, wbits, memLevel, strategy):
     data = DATA[:data_size]
-    compressobj = zlib.compressobj(level=level, wbits=wbits, memLevel=memLevel)
+    compressobj = zlib.compressobj(level=level, wbits=wbits, memLevel=memLevel,
+                                   strategy=strategy)
     compressed = compressobj.compress(data) + compressobj.flush()
     decompressed = zlib_ng.decompress(compressed, wbits=wbits)
     assert data == decompressed
 
 
-@pytest.mark.parametrize(["data_size", "level"],
-                         itertools.product(DATA_SIZES, range(10)))
-def test_decompress_zlib_ng(data_size, level):
+@pytest.mark.parametrize(["data_size", "level", "wbits"],
+                         itertools.product(DATA_SIZES, range(10), WBITS_RANGE),)
+def test_decompress_zlib_ng(data_size, level, wbits):
     data = DATA[:data_size]
-    compressed = zlib_ng.compress(data, level=level)
+    compressed = zlib_ng.compress(data, level=level, wbits=wbits)
     decompressed = zlib_ng.decompress(compressed)
-    print(len(decompressed))
     assert decompressed == data
 
 
-@pytest.mark.parametrize(["data_size", "level", "wbits", "memLevel"],
+@pytest.mark.parametrize(["data_size", "level", "wbits", "memLevel", "strategy"],
                          itertools.product([128 * 1024], range(1, 10),
-                                           WBITS_RANGE, range(1, 10)))
-@pytest.mark.xfail(condition=True,
-                   reason="Zlib-ng has a broken wbits implementation")
-def test_compress_compressobj(data_size, level, wbits, memLevel):
+                                           WBITS_RANGE, range(1, 10),
+                                           ZLIBNG_STRATEGIES))
+def test_compress_compressobj(data_size, level, wbits, memLevel, strategy):
     data = DATA[:data_size]
     compressobj = zlib_ng.compressobj(level=level,
                                       wbits=wbits,
-                                      memLevel=memLevel)
+                                      memLevel=memLevel,
+                                      strategy=strategy)
     compressed = compressobj.compress(data) + compressobj.flush()
     decompressed = zlib.decompress(compressed, wbits=wbits)
     assert data == decompressed
 
 
-@pytest.mark.parametrize(["data_size", "level", "wbits", "memLevel"],
+@pytest.mark.parametrize(["data_size", "level", "wbits", "memLevel", "strategy"],
                          itertools.product([128 * 1024], range(1, 10),
-                                           WBITS_RANGE, range(1, 10)))
-def test_decompress_decompressobj(data_size, level, wbits, memLevel):
+                                           WBITS_RANGE, range(1, 10),
+                                           ZLIB_STRATEGIES))
+def test_decompress_decompressobj(data_size, level, wbits, memLevel, strategy):
     data = DATA[:data_size]
-    compressobj = zlib.compressobj(level=level, wbits=wbits, memLevel=memLevel)
+    compressobj = zlib.compressobj(level=level, wbits=wbits, memLevel=memLevel,
+                                   strategy=strategy)
     compressed = compressobj.compress(data) + compressobj.flush()
     decompressobj = zlib_ng.decompressobj(wbits=wbits)
     decompressed = decompressobj.decompress(compressed) + decompressobj.flush()
