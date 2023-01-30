@@ -31,13 +31,13 @@ TEST_FILE = str((Path(__file__).parent / "data" / "test.fastq.gz"))
 PYPY = sys.implementation.name == "pypy"
 
 
-def run_isal_gzip_ng(*args, stdin=None):
-    """Calling isal.gzip_ng externally seems to solve some issues on PyPy where
+def run_gzip_ng(*args, stdin=None):
+    """Calling gzip_ng externally seems to solve some issues on PyPy where
     files would not be written properly when gzip_ng.main() was called. This is
      probably due to some out of order execution that PyPy tries to pull.
      Running the process externally is detrimental to the coverage report,
      so this is only done for PyPy."""
-    process = subprocess.Popen(["python", "-m", "isal.gzip_ng", *args],
+    process = subprocess.Popen(["python", "-m", "zlib_ng.gzip_ng", *args],
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
                                stdin=subprocess.PIPE)
@@ -122,7 +122,7 @@ def test_compress_infile_outfile(tmp_path, capsysbinary):
     test_file = tmp_path / "test"
     test_file.write_bytes(DATA)
     if PYPY:
-        out, err = run_isal_gzip_ng(str(test_file))
+        out, err = run_gzip_ng(str(test_file))
     else:
         sys.argv = ['', str(test_file)]
         gzip_ng.main()
@@ -190,7 +190,7 @@ def test_compress_infile_out_file(tmp_path, capsysbinary):
     out_file = tmp_path / "compressed.gz"
     args = ['-o', str(out_file), str(test)]
     if PYPY:
-        out, err = run_isal_gzip_ng(*args)
+        out, err = run_gzip_ng(*args)
     else:
         sys.argv = ['', *args]
         gzip_ng.main()
@@ -207,7 +207,7 @@ def test_compress_infile_out_file_force(tmp_path, capsysbinary):
     out_file.touch()
     args = ['-f', '-o', str(out_file), str(test)]
     if PYPY:
-        out, err = run_isal_gzip_ng(*args)
+        out, err = run_gzip_ng(*args)
     else:
         sys.argv = ['', *args]
         gzip_ng.main()
@@ -255,7 +255,7 @@ def test_compress_infile_out_file_inmplicit_name_prompt_accept(
     out_file = tmp_path / "test.gz"
     out_file.touch()
     if PYPY:
-        out, err = run_isal_gzip_ng(str(test), stdin=b"y\n")
+        out, err = run_gzip_ng(str(test), stdin=b"y\n")
     else:
         sys.argv = ['', str(test)]
         mock_stdin = io.BytesIO(b"y")
@@ -273,7 +273,7 @@ def test_compress_infile_out_file_no_name(tmp_path, capsysbinary):
     out_file = tmp_path / "compressed.gz"
     args = ['-n', '-o', str(out_file), str(test)]
     if PYPY:
-        out, err = run_isal_gzip_ng(*args)
+        out, err = run_gzip_ng(*args)
     else:
         sys.argv = ['', '-n', '-o', str(out_file), str(test)]
         gzip_ng.main()

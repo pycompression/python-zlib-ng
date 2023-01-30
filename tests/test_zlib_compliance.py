@@ -685,6 +685,11 @@ class CompressObjectTestCase(BaseCompressTestCase, unittest.TestCase):
         dco.decompress(data, 1)
         self.assertEqual(dco.flush(size), input[1:])
 
+    # Skip this test for pypy. This is an extreme fringe use case. There are
+    # constants provided for the mode parameter, so it seems very unlikely
+    # custom ints will be used.
+    @unittest.skipIf(sys.implementation.name == "pypy",
+                     "PyPy does not handle __index__ properly")
     def test_flush_custom_length(self):
         input = HAMLET_SCENE * 10
         data = zlib.compress(input, 1)
@@ -1034,6 +1039,9 @@ class ZlibDecompressorTest(unittest.TestCase):
             compressed = None
             decompressed = None
 
+    @unittest.skipIf(sys.implementation.name == "pypy",
+                     reason="Pickling is not a requirement, and certainly "
+                            "not a blocker for PyPy.")
     def testPickle(self):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             with self.assertRaises(TypeError):
