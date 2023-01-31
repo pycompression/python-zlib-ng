@@ -159,5 +159,8 @@ This project builds upon the software and experience of many.  Many thanks to:
   <https://github.com/python/cpython/graphs/contributors>`_.
   Python-zlib-ng mimicks ``zlibmodule.c`` and ``gzip.py`` from the standard
   library to make it easier for python users to adopt it.
++ The `github actions team <https://github.com/orgs/actions/people>`_ for
+  creating the actions CI service that enables building and testing on all
+  three major operating systems.
 
 .. acknowledgements end
