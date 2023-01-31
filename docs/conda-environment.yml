@@ -1,0 +1,12 @@
+name: rtd
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - zlib-ng
+  - python >=3.7
+  - sphinx
+  - setuptools
+  - pip:
+    - sphinx-rtd-theme
+    - sphinx-argparse
