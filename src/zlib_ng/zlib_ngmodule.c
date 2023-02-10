@@ -1466,14 +1466,21 @@ zlib_adler32(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 
     Py_ssize_t len = data.len ;
     uint8_t *buf = data.buf;
-    Py_BEGIN_ALLOW_THREADS
-    while ((size_t)len > UINT32_MAX) {
-        value = zng_adler32(value, buf, UINT32_MAX);
-        buf += (size_t) UINT32_MAX;
-        len -= (size_t) UINT32_MAX;
+
+    /* Do not drop GIL for small values as it increases overhead */
+    if (len > 1024 * 5) {
+        Py_BEGIN_ALLOW_THREADS
+        while ((size_t)len > UINT32_MAX) {
+            value = zng_adler32(value, buf, UINT32_MAX);
+            buf += (size_t) UINT32_MAX;
+            len -= (size_t) UINT32_MAX;
+        }
+        value = zng_adler32(value, buf, (uint32_t)len);
+        Py_END_ALLOW_THREADS
+    } else {
+        value = zng_adler32(value, buf, (uint32_t)len);
     }
-    value = zng_adler32(value, buf, (uint32_t)len);
-    Py_END_ALLOW_THREADS
+
     return_value = PyLong_FromUnsignedLong(value & 0xffffffffU);
     PyBuffer_Release(&data);
     return return_value;
@@ -1521,14 +1528,21 @@ zlib_crc32(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 
     Py_ssize_t len = data.len ;
     uint8_t *buf = data.buf;
-    Py_BEGIN_ALLOW_THREADS
-    while ((size_t)len > UINT32_MAX) {
-        value = zng_crc32(value, buf, UINT32_MAX);
-        buf += (size_t) UINT32_MAX;
-        len -= (size_t) UINT32_MAX;
+
+    /* Do not drop GIL for small values as it increases overhead */
+    if (len > 1024 * 5) {
+        Py_BEGIN_ALLOW_THREADS
+        while ((size_t)len > UINT32_MAX) {
+            value = zng_crc32(value, buf, UINT32_MAX);
+            buf += (size_t) UINT32_MAX;
+            len -= (size_t) UINT32_MAX;
+        }
+        value = zng_crc32(value, buf, (uint32_t)len);
+        Py_END_ALLOW_THREADS
+    } else {
+        value = zng_crc32(value, buf, (uint32_t)len);
     }
-    value = zng_crc32(value, buf, (uint32_t)len);
-    Py_END_ALLOW_THREADS
+
     return_value = PyLong_FromUnsignedLong(value & 0xffffffffU);
     PyBuffer_Release(&data);
     return return_value;
