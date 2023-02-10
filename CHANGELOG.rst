@@ -7,6 +7,10 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
+version 0.2.0-dev
+-----------------
++ Escape GIL for adler32 and crc32 functions.
+
 version 0.1.0
 -----------------
 + Build wheels for all three major operating systems.
