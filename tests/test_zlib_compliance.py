@@ -835,10 +835,6 @@ class CompressObjectTestCase(BaseCompressTestCase, unittest.TestCase):
         finally:
             comp = uncomp = data = None
 
-    # TODO: zlib-ng does not handle wbits for the zlib header correctly.
-    # TODO: latest zlib-ng works correctly. Should be fixed when new release
-    # TODO: of zlib-ng comes.
-    @unittest.expectedFailure
     def test_wbits(self):
         # wbits=0 only supported since zlib v1.2.3.5
         # Register "1.2.3" as "1.2.3.0"
