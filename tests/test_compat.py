@@ -82,14 +82,7 @@ def test_adler32(data_size, value):
 def test_compress(data_size, level, wbits):
     data = DATA[:data_size]
     compressed = zlib_ng.compress(data, level=level, wbits=wbits)
-    try:
-        decompressed = zlib.decompress(compressed, wbits)
-    except zlib.error:
-        # Known bug in zlib-ng 2.0.6. Wbits is not correctly applied for level 1.
-        if (zlib_ng.ZLIBNG_VERSION == "2.0.6" and
-                level == 1 and
-                wbits & 0b1111 < 13):
-            pytest.xfail()
+    decompressed = zlib.decompress(compressed, wbits)
     assert decompressed == data
 
 
@@ -118,15 +111,7 @@ def test_decompress_wbits(data_size, level, wbits, memLevel, strategy):
 def test_decompress_zlib_ng(data_size, level, wbits):
     data = DATA[:data_size]
     compressed = zlib_ng.compress(data, level=level, wbits=wbits)
-    try:
-        decompressed = zlib_ng.decompress(compressed, wbits=wbits)
-    except zlib_ng.error:
-        # Known bug in zlib-ng 2.0.6. Wbits is not correctly applied for level 1.
-        if (zlib_ng.ZLIBNG_VERSION == "2.0.6" and
-                level == 1 and
-                wbits & 0b1111 < 13):
-            pytest.xfail()
-    assert decompressed == data
+    decompressed = zlib_ng.decompress(compressed, wbits=wbits)
     assert decompressed == data
 
 
@@ -139,14 +124,7 @@ def test_compress_compressobj(data_size, level, wbits, memLevel, strategy):
                                       memLevel=memLevel,
                                       strategy=strategy)
     compressed = compressobj.compress(data) + compressobj.flush()
-    try:
-        decompressed = zlib.decompress(compressed, wbits=wbits)
-    except zlib.error:
-        # Known bug in zlib-ng 2.0.6. Wbits is not correctly applied for level 1.
-        if (zlib_ng.ZLIBNG_VERSION == "2.0.6" and
-                level == 1 and
-                wbits & 0b1111 < 13):
-            pytest.xfail()
+    decompressed = zlib.decompress(compressed, wbits=wbits)
     assert data == decompressed
 
 
