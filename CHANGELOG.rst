@@ -9,6 +9,7 @@ Changelog
 
 version 0.2.0-dev
 -----------------
++ Update embedded zlib-ng version to 2.0.7
 + Escape GIL for adler32 and crc32 functions.
 
 version 0.1.0
