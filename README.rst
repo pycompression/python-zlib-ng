@@ -120,13 +120,8 @@ Differences with zlib and gzip modules
 
 .. differences start
 
-+ Compression level 1 zlib_ng has a much worse compression rate than that in
++ Compression level 1 zlib_ng has a worse compression rate than that in
   zlib. For other compression levels zlib_ng compresses better.
-+ Compression level 1 does not apply requested ``wbits`` correctly. For example
-  compressing with ``zlib_ng.compress(data, level=1, wbits=-9)`` results in
-  data that cannot be decompressed with ``zlib_ng.decompress(data, wbits=-9)``
-  as this will throw an error mentioning invalid window sizes. This is a
-  bug in the included zlib-ng 2.0.6.
 + ``gzip_ng.open`` returns a class ``GzipNGFile`` instead of ``GzipFile``. Since
   there are differences between the compressed ratios between levels, a
   difference in naming was chosen to reflect this.
