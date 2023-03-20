@@ -9,8 +9,8 @@
 #include "stdbool.h"
 #include "stdint.h"
 
-#if defined(ZLIBNG_VERNUM) && ZLIBNG_VERNUM < 0x02060
-#error "At least zlib-ng version 2.0.6 is required"
+#if defined(ZLIBNG_VERNUM) && ZLIBNG_VERNUM < 0x02070
+#error "At least zlib-ng version 2.0.7 is required"
 #endif
 
 #define ENTER_ZLIB(obj) do {                      \
