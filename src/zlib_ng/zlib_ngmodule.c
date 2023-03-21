@@ -9,8 +9,8 @@
 #include "stdbool.h"
 #include "stdint.h"
 
-#if defined(ZLIBNG_VERNUM) && ZLIBNG_VERNUM < 0x02060
-#error "At least zlib-ng version 2.0.6 is required"
+#if defined(ZLIBNG_VERNUM) && ZLIBNG_VERNUM < 0x02070
+#error "At least zlib-ng version 2.0.7 is required"
 #endif
 
 #define ENTER_ZLIB(obj) do {                      \
@@ -1466,12 +1466,21 @@ zlib_adler32(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 
     Py_ssize_t len = data.len ;
     uint8_t *buf = data.buf;
-    while ((size_t)len > UINT32_MAX) {
-        value = zng_adler32(value, buf, UINT32_MAX);
-        buf += (size_t) UINT32_MAX;
-        len -= (size_t) UINT32_MAX;
+
+    /* Do not drop GIL for small values as it increases overhead */
+    if (len > 1024 * 5) {
+        Py_BEGIN_ALLOW_THREADS
+        while ((size_t)len > UINT32_MAX) {
+            value = zng_adler32(value, buf, UINT32_MAX);
+            buf += (size_t) UINT32_MAX;
+            len -= (size_t) UINT32_MAX;
+        }
+        value = zng_adler32(value, buf, (uint32_t)len);
+        Py_END_ALLOW_THREADS
+    } else {
+        value = zng_adler32(value, buf, (uint32_t)len);
     }
-    value = zng_adler32(value, buf, (uint32_t)len);
+
     return_value = PyLong_FromUnsignedLong(value & 0xffffffffU);
     PyBuffer_Release(&data);
     return return_value;
@@ -1519,12 +1528,21 @@ zlib_crc32(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
 
     Py_ssize_t len = data.len ;
     uint8_t *buf = data.buf;
-    while ((size_t)len > UINT32_MAX) {
-        value = zng_crc32(value, buf, UINT32_MAX);
-        buf += (size_t) UINT32_MAX;
-        len -= (size_t) UINT32_MAX;
+
+    /* Do not drop GIL for small values as it increases overhead */
+    if (len > 1024 * 5) {
+        Py_BEGIN_ALLOW_THREADS
+        while ((size_t)len > UINT32_MAX) {
+            value = zng_crc32(value, buf, UINT32_MAX);
+            buf += (size_t) UINT32_MAX;
+            len -= (size_t) UINT32_MAX;
+        }
+        value = zng_crc32(value, buf, (uint32_t)len);
+        Py_END_ALLOW_THREADS
+    } else {
+        value = zng_crc32(value, buf, (uint32_t)len);
     }
-    value = zng_crc32(value, buf, (uint32_t)len);
+
     return_value = PyLong_FromUnsignedLong(value & 0xffffffffU);
     PyBuffer_Release(&data);
     return return_value;
