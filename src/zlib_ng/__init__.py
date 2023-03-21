@@ -5,4 +5,4 @@
 # This file is part of python-zlib-ng which is distributed under the
 # PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2.
 
-__version__ = "0.2.0"
+__version__ = "0.3.0-dev"
