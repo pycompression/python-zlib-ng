@@ -106,7 +106,7 @@ jobs:
           distro: ${{ matrix.distro }}
           install: |
             apt-get update -q -y
-            apt-get install -q -y python3 python3-pip tox cmake
+            apt-get install -q -y python3 python3-pip tox cmake git googletest
           run: |
             tox
 
