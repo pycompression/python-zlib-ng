@@ -7,6 +7,13 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
+version 0.3.0-dev
+-----------------
++ Update embedded zlib-ng version to 2.1.2. This comes with some speed
+  improvements and changes with regards to the compression levels. For full
+  details checkout the `zlib-ng 2.1.2 release notes
+  <https://github.com/zlib-ng/zlib-ng/releases/tag/2.1.2>`_.
+
 version 0.2.0
 -----------------
 + Update embedded zlib-ng version to 2.0.7
