@@ -13,6 +13,7 @@ version 0.3.0-dev
   improvements and changes with regards to the compression levels. For full
   details checkout the `zlib-ng 2.1.2 release notes
   <https://github.com/zlib-ng/zlib-ng/releases/tag/2.1.2>`_.
++ Build wheels for macOS arm64.
 
 version 0.2.0
 -----------------
