@@ -19,7 +19,8 @@ from setuptools.command.build_ext import build_ext
 ZLIB_NG_SOURCE = os.path.join("src", "zlib_ng", "zlib-ng")
 
 SYSTEM_IS_UNIX = (sys.platform.startswith("linux") or
-                  sys.platform.startswith("darwin"))
+                  sys.platform.startswith("darwin") or
+                  'bsd' in sys.platform)
 SYSTEM_IS_WINDOWS = sys.platform.startswith("win")
 
 # Since pip builds in a temp directory by default, setting a fixed file in
