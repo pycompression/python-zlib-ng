@@ -9,6 +9,7 @@ Changelog
 
 version 0.3.0-dev
 -----------------
++ Enabled installation on BSD
 + Update embedded zlib-ng version to 2.1.2. This comes with some speed
   improvements and changes with regards to the compression levels. For full
   details checkout the `zlib-ng 2.1.2 release notes
