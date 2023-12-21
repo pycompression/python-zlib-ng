@@ -13,9 +13,9 @@ version 0.3.0-dev
   improvements and changes with regards to the compression levels. For full
   details checkout the `zlib-ng 2.1.2 release notes
   <https://github.com/zlib-ng/zlib-ng/releases/tag/2.1.2>`_.
-+ Update embedded zlib-ng version to 2.1.4. This comes with some small fixes.
-  For full details checkout the `zlib-ng 2.1.4 release notes
-  <https://github.com/zlib-ng/zlib-ng/releases/tag/2.1.4>`_.
++ Update embedded zlib-ng version to 2.1.5. This comes with some small fixes.
+  For full details checkout the `zlib-ng 2.1.5 release notes
+  <https://github.com/zlib-ng/zlib-ng/releases/tag/2.1.5>`_.
 
 version 0.2.0
 -----------------
