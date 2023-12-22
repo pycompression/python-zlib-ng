@@ -7,7 +7,7 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
-version 0.3.0-dev
+version 0.3.0
 -----------------
 + Source distributions on Linux now default to building with configure and
   make as it is faster and has less dependencies than CMake.
