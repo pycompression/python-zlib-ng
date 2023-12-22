@@ -1600,13 +1600,16 @@ typedef struct {
     uint8_t *buffer;
     uint32_t buffer_size;
     zng_stream zst;
+    uint8_t is_initialised;
 } ParallelCompress;
 
 static void 
 ParallelCompress_dealloc(ParallelCompress *self)
 {
     PyMem_Free(self->buffer);
-    zng_deflateEnd(&self->zst);
+    if (self->is_initialised) {
+        zng_deflateEnd(&self->zst);
+    }
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
@@ -1638,6 +1641,7 @@ ParallelCompress__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     self->zst.opaque = NULL;
     self->zst.zalloc = PyZlib_Malloc;
     self->zst.zfree = PyZlib_Free;
+    self->is_initialised = 0;
     int err = zng_deflateInit2(&self->zst, level, DEFLATED, -MAX_WBITS, DEF_MEM_LEVEL, 
                                Z_DEFAULT_STRATEGY);
     switch (err) {
@@ -1658,6 +1662,7 @@ ParallelCompress__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         Py_DECREF(self);
         return NULL;
     }
+    self->is_initialised = 1;
     uint8_t *buffer = PyMem_Malloc(buffer_size);
     if (buffer == NULL) {
         Py_DECREF(self);
