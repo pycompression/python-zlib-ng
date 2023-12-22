@@ -9,6 +9,8 @@ Changelog
 
 version 0.3.0-dev
 -----------------
++ Source distributions on Linux now default to building with configure and
+  make as it is faster and has less dependencies than CMake.
 + Python 3.12 support was added. Python 3.7 support was dropped as it is end
   of life.
 + Enabled installation on BSD

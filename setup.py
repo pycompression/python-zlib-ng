@@ -39,9 +39,7 @@ EXTENSIONS = [
 class BuildZlibNGExt(build_ext):
     def build_extension(self, ext):
         # Add option to link dynamically for packaging systems such as conda.
-        # Always link dynamically on readthedocs to simplify install.
-        if (os.getenv("PYTHON_ZLIB_NG_LINK_DYNAMIC") is not None or
-                os.environ.get("READTHEDOCS") is not None):
+        if os.getenv("PYTHON_ZLIB_NG_LINK_DYNAMIC") is not None:
             # Check for zlib_ng include directories. This is useful when
             # installing in a conda environment.
             possible_prefixes = [sys.exec_prefix, sys.base_exec_prefix]
@@ -108,6 +106,9 @@ def build_zlib_ng():
     if sys.platform == "darwin":  # Cmake does not work properly
         subprocess.run([os.path.join(build_dir, "configure")], **run_args)
         subprocess.run(["gmake", "libz-ng.a"], **run_args)
+    elif sys.platform == "linux":
+        subprocess.run([os.path.join(build_dir, "configure")], **run_args)
+        subprocess.run(["make", "libz-ng.a", "-j", str(cpu_count)], **run_args)
     else:
         subprocess.run(["cmake", build_dir], **run_args)
         # Do not create test suite and do not perform tests to shorten build times.
