@@ -10,10 +10,16 @@ Changelog
 version 0.3.0-dev
 -----------------
 + Enabled installation on BSD
-+ Update embedded zlib-ng version to 2.1.2. This comes with some speed
-  improvements and changes with regards to the compression levels. For full
++ Update embedded zlib-ng version to 2.1.5. This comes with some speed
+  improvements and changes with regards to the compression levels. Also
+  several bugs were fixed. For full
   details checkout the `zlib-ng 2.1.2 release notes
-  <https://github.com/zlib-ng/zlib-ng/releases/tag/2.1.2>`_.
+  <https://github.com/zlib-ng/zlib-ng/releases/tag/2.1.2>`_ as well as
+  those for the bugfix releases `2.1.3
+  <https://github.com/zlib-ng/zlib-ng/releases/tag/2.1.3>`_,
+  `2.1.4 <https://github.com/zlib-ng/zlib-ng/releases/tag/2.1.4>`_ and
+  `2.1.5 <https://github.com/zlib-ng/zlib-ng/releases/tag/2.1.5>`_.
+
 
 version 0.2.0
 -----------------
