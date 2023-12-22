@@ -1595,6 +1595,201 @@ zlib_crc32_combine(PyObject *module, PyObject *args) {
         zng_crc32_combine(crc1, crc2, crc2_length) & 0xFFFFFFFF);
 }
 
+typedef struct {
+    PyObject_HEAD 
+    uint8_t *buffer;
+    uint32_t buffer_size;
+    zng_stream zst;
+} ParallelCompress;
+
+static void 
+ParallelCompress_dealloc(ParallelCompress *self)
+{
+    PyMem_Free(self->buffer);
+    zng_deflateEnd(&self->zst);
+    Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
+static PyObject *
+ParallelCompress__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+    Py_ssize_t buffer_size = 0;
+    int level = Z_DEFAULT_COMPRESSION;
+    static char *format = "n|i:ParallelCompress__new__";
+    static char *kwarg_names[] = {"buffersize", "level", NULL};
+    if (PyArg_ParseTupleAndKeywords(args, kwargs, format, kwarg_names, 
+        &buffer_size, &level) < 0) {
+            return NULL;
+    }
+    if (buffer_size > UINT32_MAX) {
+        PyErr_Format(PyExc_ValueError, 
+        "buffersize must be at most %zd, got %zd", 
+        (Py_ssize_t)UINT32_MAX, buffer_size);
+    }
+    ParallelCompress *self = PyObject_New(ParallelCompress, type);
+    if (self == NULL) {
+        return PyErr_NoMemory();
+    }
+    self->buffer = NULL;
+    self->zst.next_in = NULL;
+    self->zst.avail_in = 0;
+    self->zst.next_out = NULL;
+    self->zst.avail_out = 0;
+    self->zst.opaque = NULL;
+    self->zst.zalloc = PyZlib_Malloc;
+    self->zst.zfree = PyZlib_Free;
+    int err = zng_deflateInit2(&self->zst, level, DEFLATED, -MAX_WBITS, DEF_MEM_LEVEL, 
+                               Z_DEFAULT_STRATEGY);
+    switch (err) {
+    case Z_OK:
+        break;
+    case Z_MEM_ERROR:
+        PyErr_SetString(PyExc_MemoryError,
+                        "Out of memory while compressing data");
+        Py_DECREF(self);
+        return NULL;
+    case Z_STREAM_ERROR:
+        PyErr_SetString(ZlibError, "Bad compression level");
+        Py_DECREF(self);
+        return NULL;
+    default:
+        zng_deflateEnd(&self->zst);
+        zlib_error(self->zst, err, "while compressing data");
+        Py_DECREF(self);
+        return NULL;
+    }
+    uint8_t *buffer = PyMem_Malloc(buffer_size);
+    if (buffer == NULL) {
+        Py_DECREF(self);
+        return PyErr_NoMemory();
+    }
+    self->buffer = buffer;
+    self->buffer_size = buffer_size;
+    return (PyObject *)self;
+}
+
+
+PyDoc_STRVAR(ParallelCompress_compress_and_crc__doc__,
+"compress_and_crc($self, data, zdict, /)\n"
+"--\n"
+"\n"
+"Function specifically designed for use in parallel compression. Data is \n"
+"compressed using deflate and Z_SYNC_FLUSH is used to ensure the block aligns\n"
+"to a byte boundary. Also the CRC is calculated. This function is designed to \n"
+"maximize the time spent outside the GIL\n"
+"\n"
+"  data\n"
+"    bytes-like object containing the to be compressed data\n"
+"  zdict\n"
+"    last 32 bytes of the previous block\n"
+);
+#define PARALLELCOMPRESS_COMPRESS_AND_CRC_METHODDEF \
+    { \
+        "compress_and_crc", (PyCFunction)ParallelCompress_compress_and_crc, \
+            METH_FASTCALL, ParallelCompress_compress_and_crc__doc__}
+
+static PyObject *
+ParallelCompress_compress_and_crc(ParallelCompress *self, 
+                                  PyObject *const *args,
+                                  Py_ssize_t nargs)
+{
+    if (nargs != 2) {
+        PyErr_Format(
+            PyExc_TypeError, 
+            "compress_and_crc takes exactly 2 arguments, got %zd", 
+            nargs);
+        return NULL;
+    }
+    Py_buffer data;
+    Py_buffer zdict;
+    if (PyObject_GetBuffer(args[0], &data, PyBUF_SIMPLE) == -1) {
+        return NULL;
+    }
+    if (PyObject_GetBuffer(args[1], &zdict, PyBUF_SIMPLE) == -1) {
+        PyBuffer_Release(&data);
+        return NULL;
+    }
+
+    if (data.len + zdict.len > UINT32_MAX) {
+        PyErr_Format(PyExc_OverflowError, 
+                     "Can only compress %d bytes of data", UINT32_MAX);
+        goto error;
+    }
+    PyThreadState *_save;
+    Py_UNBLOCK_THREADS
+    int err = zng_deflateReset(&self->zst);
+    if (err != Z_OK) {
+        Py_BLOCK_THREADS;
+        zlib_error(self->zst, err, "error resetting deflate state");
+        goto error;
+    }
+    self->zst.avail_in = data.len;
+    self->zst.next_in = data.buf;
+    self->zst.next_out = self->buffer;
+    self->zst.avail_out = self->buffer_size;
+    err = zng_deflateSetDictionary(&self->zst, zdict.buf, zdict.len);
+    if (err != Z_OK){
+        Py_BLOCK_THREADS;
+        zlib_error(self->zst, err, "error setting dictionary");
+        goto error;
+    }
+    uint32_t crc = zng_crc32_z(0, data.buf, data.len);
+    err = zng_deflate(&self->zst, Z_SYNC_FLUSH);
+    Py_BLOCK_THREADS;
+
+    if (err != Z_OK) {
+        zlib_error(self->zst, err, "error setting dictionary");
+        goto error;
+    }
+    if (self->zst.avail_out == 0) {
+        PyErr_Format(
+            PyExc_OverflowError,
+            "Compressed output exceeds buffer size of %u", self->buffer_size
+        );
+        goto error;
+    }
+    if (self->zst.avail_in != 0) {
+        PyErr_Format(
+            PyExc_RuntimeError, 
+            "Developer error input bytes are still available: %u. "
+            "Please contact the developers by creating an issue at "
+            "https://github.com/pycompression/python-isal/issues", 
+            self->zst.avail_in);
+        goto error;
+    }
+    PyObject *out_tup = PyTuple_New(2);
+    PyObject *crc_obj = PyLong_FromUnsignedLong(crc);
+    PyObject *out_bytes = PyBytes_FromStringAndSize(
+        (char *)self->buffer, self->zst.next_out - self->buffer);
+    if (out_bytes == NULL || out_tup == NULL || crc_obj == NULL) {
+        Py_XDECREF(out_bytes); Py_XDECREF(out_tup); Py_XDECREF(crc_obj);
+        goto error;
+    }
+    PyBuffer_Release(&data);
+    PyBuffer_Release(&zdict); 
+    PyTuple_SET_ITEM(out_tup, 0, out_bytes);
+    PyTuple_SET_ITEM(out_tup, 1, crc_obj);
+    return out_tup;
+error:
+    PyBuffer_Release(&data);
+    PyBuffer_Release(&zdict); 
+    return NULL;
+}
+
+static PyMethodDef ParallelCompress_methods[] = {
+    PARALLELCOMPRESS_COMPRESS_AND_CRC_METHODDEF,
+    {NULL},
+};
+
+static PyTypeObject ParallelCompress_Type = {
+    .tp_name = "isal_zlib._ParallelCompress",
+    .tp_basicsize = sizeof(ParallelCompress),
+    .tp_doc = PyDoc_STR(
+        "A reusable zstream and buffer fast parallel compression."),
+    .tp_dealloc = (destructor)ParallelCompress_dealloc,
+    .tp_new = ParallelCompress__new__,
+    .tp_methods = ParallelCompress_methods,
+};
 
 PyDoc_STRVAR(zlib_compress__doc__,
 "compress($module, data, /, level=Z_DEFAULT_COMPRESSION, wbits=MAX_WBITS)\n"
@@ -2796,6 +2991,15 @@ PyInit_zlib_ng(void)
     }
     Py_INCREF(&GzipReader_Type);
     if (PyModule_AddObject(m, "_GzipReader", (PyObject *)&GzipReader_Type) < 0) {
+        return NULL;
+    }
+
+    if (PyType_Ready(&ParallelCompress_Type) != 0) {
+        return NULL;
+    }
+    Py_INCREF(&ParallelCompress_Type);
+    if (PyModule_AddObject(m, "_ParallelCompress", 
+                           (PyObject *)&ParallelCompress_Type) < 0) {
         return NULL;
     }
 

@@ -70,6 +70,10 @@ def compressobj(level: int = Z_DEFAULT_COMPRESSION,
 
 def decompressobj(wbits: int = MAX_WBITS, zdict = None) -> _Decompress: ...
 
+class _ParallelCompress:
+    def __init__(self, buffersize: int, level: int): ...
+    def compress_and_crc(self, __data, __zdict) -> typing.Tuple[bytes, int]: ...
+
 class _ZlibDecompressor:
     unused_data: bytes
     needs_input: bool
