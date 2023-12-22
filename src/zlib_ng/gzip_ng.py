@@ -28,6 +28,7 @@ import time
 import _compression  # noqa: I201  # Not third-party
 
 from . import zlib_ng
+from .zlib_ng import _GzipReader
 
 __all__ = ["GzipFile", "open", "compress", "decompress", "BadGzipFile",
            "READ_BUFFER_SIZE"]
@@ -36,19 +37,14 @@ _COMPRESS_LEVEL_FAST = zlib_ng.Z_BEST_SPEED
 _COMPRESS_LEVEL_TRADEOFF = zlib_ng.Z_DEFAULT_COMPRESSION
 _COMPRESS_LEVEL_BEST = zlib_ng.Z_BEST_COMPRESSION
 
-#: The amount of data that is read in at once when decompressing a file.
-#: Increasing this value may increase performance.
-#: 128K is also the size used by pigz and cat to read files from the
-# filesystem.
-READ_BUFFER_SIZE = 128 * 1024
+# The amount of data that is read in at once when decompressing a file.
+# Increasing this value may increase performance.
+READ_BUFFER_SIZE = 512 * 1024
 
 FTEXT, FHCRC, FEXTRA, FNAME, FCOMMENT = 1, 2, 4, 8, 16
 READ, WRITE = 1, 2
 
-try:
-    BadGzipFile = gzip.BadGzipFile  # type: ignore
-except AttributeError:  # Versions lower than 3.8 do not have BadGzipFile
-    BadGzipFile = OSError  # type: ignore
+BadGzipFile = gzip.BadGzipFile  # type: ignore
 
 
 # The open method was copied from the CPython source with minor adjustments.
@@ -149,7 +145,7 @@ class GzipNGFile(gzip.GzipFile):
                                                 zlib_ng.DEF_MEM_LEVEL,
                                                 0)
         if self.mode == READ:
-            raw = _GzipNGReader(self.fileobj)
+            raw = _GzipReader(self.fileobj, READ_BUFFER_SIZE)
             self._buffer = io.BufferedReader(raw)
 
     def __repr__(self):
@@ -180,73 +176,9 @@ class GzipNGFile(gzip.GzipFile):
         return length
 
 
-class _GzipNGReader(gzip._GzipReader):
-    def __init__(self, fp):
-        # Call the init method of gzip._GzipReader's parent here.
-        # It is not very invasive and allows us to override _PaddedFile
-        _compression.DecompressReader.__init__(
-            self, gzip._PaddedFile(fp), zlib_ng._ZlibDecompressor,
-            wbits=-zlib_ng.MAX_WBITS)
-        # Set flag indicating start of a new member
-        self._new_member = True
-        self._last_mtime = None
-
-    def read(self, size=-1):
-        if size < 0:
-            return self.readall()
-        # size=0 is special because decompress(max_length=0) is not supported
-        if not size:
-            return b""
-
-        # For certain input data, a single
-        # call to decompress() may not return
-        # any data. In this case, retry until we get some data or reach EOF.
-        while True:
-            if self._decompressor.eof:
-                # Ending case: we've come to the end of a member in the file,
-                # so finish up this member, and read a new gzip header.
-                # Check the CRC and file size, and set the flag so we read
-                # a new member
-                self._read_eof()
-                self._new_member = True
-                self._decompressor = self._decomp_factory(
-                    **self._decomp_args)
-
-            if self._new_member:
-                # If the _new_member flag is set, we have to
-                # jump to the next member, if there is one.
-                self._init_read()
-                if not self._read_gzip_header():
-                    self._size = self._pos
-                    return b""
-                self._new_member = False
-
-            # Read a chunk of data from the file
-            if self._decompressor.needs_input:
-                buf = self._fp.read(READ_BUFFER_SIZE)
-                uncompress = self._decompressor.decompress(buf, size)
-            else:
-                uncompress = self._decompressor.decompress(b"", size)
-            if self._decompressor.unused_data != b"":
-                # Prepend the already read bytes to the fileobj so they can
-                # be seen by _read_eof() and _read_gzip_header()
-                self._fp.prepend(self._decompressor.unused_data)
-
-            if uncompress != b"":
-                break
-            if buf == b"":
-                raise EOFError("Compressed file ended before the "
-                               "end-of-stream marker was reached")
-
-        self._crc = zlib_ng.crc32(uncompress, self._crc)
-        self._stream_size += len(uncompress)
-        self._pos += len(uncompress)
-        return uncompress
-
-
 # Aliases for improved compatibility with CPython gzip module.
 GzipFile = GzipNGFile
-_GzipReader = _GzipNGReader
+_GzipNGReader = _GzipReader
 
 
 def _read_exact(fp, n):
@@ -342,25 +274,9 @@ def decompress(data):
     """Decompress a gzip compressed string in one shot.
     Return the decompressed string.
     """
-    decompressed_members = []
-    while True:
-        fp = io.BytesIO(data)
-        if _read_gzip_header(fp) is None:
-            return b"".join(decompressed_members)
-        # Use a zlib raw deflate compressor
-        do = zlib_ng.decompressobj(wbits=-zlib_ng.MAX_WBITS)
-        # Read all the data except the header
-        decompressed = do.decompress(data[fp.tell():])
-        if not do.eof or len(do.unused_data) < 8:
-            raise EOFError("Compressed file ended before the end-of-stream "
-                           "marker was reached")
-        crc, length = struct.unpack("<II", do.unused_data[:8])
-        if crc != zlib_ng.crc32(decompressed):
-            raise BadGzipFile("CRC check failed")
-        if length != (len(decompressed) & 0xffffffff):
-            raise BadGzipFile("Incorrect length of data produced")
-        decompressed_members.append(decompressed)
-        data = do.unused_data[8:].lstrip(b"\x00")
+    fp = io.BytesIO(data)
+    reader = _GzipReader(fp, max(len(data), 16))
+    return reader.readall()
 
 
 def _argument_parser():
