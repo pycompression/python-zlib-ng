@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from zlib_ng import gzip_ng
+from zlib_ng import gzip_ng, zlib_ng
 
 DATA = b'This is a simple test with gzip_ng'
 COMPRESSED_DATA = gzip.compress(DATA)
@@ -373,9 +373,76 @@ def test_truncated_header(trunc):
         gzip_ng.decompress(trunc)
 
 
+def test_very_long_header_in_data():
+    # header with a very long filename.
+    header = (b"\x1f\x8b\x08\x08\x00\x00\x00\x00\x00\xff" + 256 * 1024 * b"A" +
+              b"\x00")
+    compressed = header + zlib_ng.compress(b"", 3, -15) + 8 * b"\00"
+    assert gzip_ng.decompress(compressed) == b""
+
+
+def test_very_long_header_in_file():
+    # header with a very long filename.
+    header = (b"\x1f\x8b\x08\x08\x00\x00\x00\x00\x00\xff" +
+              gzip_ng.READ_BUFFER_SIZE * 2 * b"A" +
+              b"\x00")
+    compressed = header + zlib_ng.compress(b"", 3, -15) + 8 * b"\00"
+    f = io.BytesIO(compressed)
+    with gzip_ng.open(f) as gzip_file:
+        assert gzip_file.read() == b""
+
+
 def test_concatenated_gzip():
     concat = Path(__file__).parent / "data" / "concatenated.fastq.gz"
     data = gzip.decompress(concat.read_bytes())
     with gzip_ng.open(concat, "rb") as gzip_ng_h:
         result = gzip_ng_h.read()
     assert data == result
+
+
+def test_seek():
+    from io import SEEK_CUR, SEEK_END, SEEK_SET
+    with tempfile.NamedTemporaryFile("wb", delete=False) as tmpfile:
+        tmpfile.write(gzip.compress(b"X" * 500 + b"A" + b"X" * 499))
+        tmpfile.write(gzip.compress(b"X" * 500 + b"B" + b"X" * 499))
+        tmpfile.write(gzip.compress(b"X" * 500 + b"C" + b"X" * 499))
+        tmpfile.write(gzip.compress(b"X" * 500 + b"D" + b"X" * 499))
+    with gzip_ng.open(tmpfile.name, "rb") as gzip_file:
+        # Start testing forward seek
+        gzip_file.seek(500)
+        assert gzip_file.read(1) == b"A"
+        gzip_file.seek(1500)
+        assert gzip_file.read(1) == b"B"
+        # Test reverse
+        gzip_file.seek(500)
+        assert gzip_file.read(1) == b"A"
+        # Again, but with explicit SEEK_SET
+        gzip_file.seek(500, SEEK_SET)
+        assert gzip_file.read(1) == b"A"
+        gzip_file.seek(1500, SEEK_SET)
+        assert gzip_file.read(1) == b"B"
+        gzip_file.seek(500, SEEK_SET)
+        assert gzip_file.read(1) == b"A"
+        # Seeking from current position
+        gzip_file.seek(500)
+        gzip_file.seek(2000, SEEK_CUR)
+        assert gzip_file.read(1) == b"C"
+        gzip_file.seek(-1001, SEEK_CUR)
+        assert gzip_file.read(1) == b"B"
+        # Seeking from end
+        # Any positive number should end up at the end
+        gzip_file.seek(200, SEEK_END)
+        assert gzip_file.read(1) == b""
+        gzip_file.seek(-1500, SEEK_END)
+        assert gzip_file.read(1) == b"C"
+    os.remove(tmpfile.name)
+
+
+def test_bgzip():
+    bgzip_file = Path(__file__).parent / "data" / "test.fastq.bgzip.gz"
+    gzip_file = Path(__file__).parent / "data" / "test.fastq.gz"
+    with gzip_ng.open(bgzip_file, "rb") as bgz:
+        bgz_data = bgz.read()
+    with gzip_ng.open(gzip_file, "rb") as gz:
+        gz_data = gz.read()
+    assert bgz_data == gz_data
