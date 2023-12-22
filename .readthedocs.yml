@@ -17,4 +17,4 @@ build:
 
 # Make sure zlib-ng is cloned alongside
 submodules:
-  recursive: true
+  include: all
