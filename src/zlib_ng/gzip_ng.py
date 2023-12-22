@@ -25,7 +25,6 @@ import os
 import struct
 import sys
 import time
-import _compression  # noqa: I201  # Not third-party
 
 from . import zlib_ng
 from .zlib_ng import _GzipReader
