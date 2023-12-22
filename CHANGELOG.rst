@@ -7,6 +7,10 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
+version 0.4.0-dev
+-----------------
++ Fix some unclosed buffer errors in the gzip_ng CLI.
+
 version 0.3.0
 -----------------
 + Source distributions on Linux now default to building with configure and
