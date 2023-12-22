@@ -14,3 +14,7 @@ build:
   os: "ubuntu-22.04"
   tools:
     python: "3"
+
+# Make sure zlib-ng is cloned alongside
+submodules:
+  recursive: true
