@@ -12,9 +12,9 @@ import os
 import tempfile
 from pathlib import Path
 
-from zlib_ng import gzip_ng_threaded, zlib_ng
-
 import pytest
+
+from zlib_ng import gzip_ng_threaded, zlib_ng
 
 TEST_FILE = str((Path(__file__).parent / "data" / "test.fastq.gz"))
 
@@ -33,7 +33,7 @@ def test_threaded_write(mode, threads):
     with tempfile.NamedTemporaryFile("wb", delete=False) as tmp:
         # Use a small block size to simulate many writes.
         with gzip_ng_threaded.open(tmp, mode, threads=threads,
-                                 block_size=8*1024) as out_file:
+                                   block_size=8*1024) as out_file:
             gzip_open_mode = "rb" if "b" in mode else "rt"
             with gzip.open(TEST_FILE, gzip_open_mode) as in_file:
                 while True:
