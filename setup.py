@@ -39,9 +39,7 @@ EXTENSIONS = [
 class BuildZlibNGExt(build_ext):
     def build_extension(self, ext):
         # Add option to link dynamically for packaging systems such as conda.
-        # Always link dynamically on readthedocs to simplify install.
-        if (os.getenv("PYTHON_ZLIB_NG_LINK_DYNAMIC") is not None or
-                os.environ.get("READTHEDOCS") is not None):
+        if os.getenv("PYTHON_ZLIB_NG_LINK_DYNAMIC") is not None:
             # Check for zlib_ng include directories. This is useful when
             # installing in a conda environment.
             possible_prefixes = [sys.exec_prefix, sys.base_exec_prefix]
