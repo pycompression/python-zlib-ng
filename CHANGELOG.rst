@@ -9,6 +9,8 @@ Changelog
 
 version 0.3.0-dev
 -----------------
++ Python 3.12 support was added. Python 3.7 support was dropped as it is end
+  of life.
 + Enabled installation on BSD
 + Update embedded zlib-ng version to 2.1.5. This comes with some speed
   improvements and changes with regards to the compression levels. Also
