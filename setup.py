@@ -142,11 +142,11 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Programming Language :: C",
@@ -157,6 +157,6 @@ setup(
         "Operating System :: MacOS",
         "Operating System :: Microsoft :: Windows",
     ],
-    python_requires=">=3.7",  # uses METH_FASTCALL
+    python_requires=">=3.8",  # Earliest version still tested.
     ext_modules=EXTENSIONS
 )
