@@ -9,6 +9,11 @@ Changelog
 
 version 0.4.0-dev
 -----------------
++ The internal ``gzip_ng._GzipReader`` has been rewritten in C. As a result the
+  overhead of decompressing files has significantly been reduced.
++ The ``gzip_ng._GzipReader`` in C is now used in ``gzip_ng.decompress``. The
+  ``_GzipReader`` also can read from objects that support the buffer protocol.
+  This has reduced overhead significantly.
 + Fix some unclosed buffer errors in the gzip_ng CLI.
 
 version 0.3.0

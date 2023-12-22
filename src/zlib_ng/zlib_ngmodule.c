@@ -2007,6 +2007,7 @@ static void GzipReader_dealloc(GzipReader *self)
     }
     Py_XDECREF(self->fp);
     PyThread_free_lock(self->lock);
+    zng_inflateEnd(&self->zst);
     Py_TYPE(self)->tp_free(self);
 }
 
