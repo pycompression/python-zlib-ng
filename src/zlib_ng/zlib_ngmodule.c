@@ -2768,6 +2768,18 @@ PyInit_zlib_ng(void)
     } 
     Py_INCREF(ZlibError);
     PyModule_AddObject(m, "error", ZlibError);
+
+    PyObject *gzip_module = PyImport_ImportModule("gzip");
+    if (gzip_module == NULL) {
+        return NULL;
+    }
+
+    BadGzipFile = PyObject_GetAttrString(gzip_module, "BadGzipFile");
+    if (BadGzipFile == NULL) {
+        return NULL;
+    }
+    Py_INCREF(BadGzipFile);
+
     PyModule_AddIntMacro(m, MAX_WBITS);
     PyModule_AddIntMacro(m, DEFLATED);
     PyModule_AddIntMacro(m, DEF_MEM_LEVEL);
