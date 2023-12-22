@@ -19,7 +19,8 @@ from setuptools.command.build_ext import build_ext
 ZLIB_NG_SOURCE = os.path.join("src", "zlib_ng", "zlib-ng")
 
 SYSTEM_IS_UNIX = (sys.platform.startswith("linux") or
-                  sys.platform.startswith("darwin"))
+                  sys.platform.startswith("darwin") or
+                  'bsd' in sys.platform)
 SYSTEM_IS_WINDOWS = sys.platform.startswith("win")
 
 # Since pip builds in a temp directory by default, setting a fixed file in
@@ -38,9 +39,7 @@ EXTENSIONS = [
 class BuildZlibNGExt(build_ext):
     def build_extension(self, ext):
         # Add option to link dynamically for packaging systems such as conda.
-        # Always link dynamically on readthedocs to simplify install.
-        if (os.getenv("PYTHON_ZLIB_NG_LINK_DYNAMIC") is not None or
-                os.environ.get("READTHEDOCS") is not None):
+        if os.getenv("PYTHON_ZLIB_NG_LINK_DYNAMIC") is not None:
             # Check for zlib_ng include directories. This is useful when
             # installing in a conda environment.
             possible_prefixes = [sys.exec_prefix, sys.base_exec_prefix]
@@ -107,6 +106,9 @@ def build_zlib_ng():
     if sys.platform == "darwin":  # Cmake does not work properly
         subprocess.run([os.path.join(build_dir, "configure")], **run_args)
         subprocess.run(["gmake", "libz-ng.a"], **run_args)
+    elif sys.platform == "linux":
+        subprocess.run([os.path.join(build_dir, "configure")], **run_args)
+        subprocess.run(["make", "libz-ng.a", "-j", str(cpu_count)], **run_args)
     else:
         subprocess.run(["cmake", build_dir], **run_args)
         # Do not create test suite and do not perform tests to shorten build times.
@@ -121,7 +123,7 @@ def build_zlib_ng():
 
 setup(
     name="zlib-ng",
-    version="0.2.0",
+    version="0.3.0",
     description="Drop-in replacement for zlib and gzip modules using zlib-ng",
     author="Leiden University Medical Center",
     author_email="r.h.p.vorderman@lumc.nl",  # A placeholder for now
@@ -141,11 +143,11 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Programming Language :: C",
@@ -156,6 +158,6 @@ setup(
         "Operating System :: MacOS",
         "Operating System :: Microsoft :: Windows",
     ],
-    python_requires=">=3.7",  # uses METH_FASTCALL
+    python_requires=">=3.8",  # Earliest version still tested.
     ext_modules=EXTENSIONS
 )
