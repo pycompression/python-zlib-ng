@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from zlib_ng import gzip_ng
+from zlib_ng import gzip_ng, zlib_ng
 
 DATA = b'This is a simple test with gzip_ng'
 COMPRESSED_DATA = gzip.compress(DATA)
@@ -377,7 +377,7 @@ def test_very_long_header_in_data():
     # header with a very long filename.
     header = (b"\x1f\x8b\x08\x08\x00\x00\x00\x00\x00\xff" + 256 * 1024 * b"A" +
               b"\x00")
-    compressed = header + zlib.compress(b"", 3, -15) + 8 * b"\00"
+    compressed = header + zlib_ng.compress(b"", 3, -15) + 8 * b"\00"
     assert gzip_ng.decompress(compressed) == b""
 
 
@@ -386,7 +386,7 @@ def test_very_long_header_in_file():
     header = (b"\x1f\x8b\x08\x08\x00\x00\x00\x00\x00\xff" +
               gzip_ng.READ_BUFFER_SIZE * 2 * b"A" +
               b"\x00")
-    compressed = header + zlib.compress(b"", 3, -15) + 8 * b"\00"
+    compressed = header + zlib_ng.compress(b"", 3, -15) + 8 * b"\00"
     f = io.BytesIO(compressed)
     with gzip_ng.open(f) as gzip_file:
         assert gzip_file.read() == b""
