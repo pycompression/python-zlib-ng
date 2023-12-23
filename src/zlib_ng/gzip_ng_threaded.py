@@ -260,7 +260,12 @@ class _ThreadedGzipWriter(io.RawIOBase):
         flags = 0
         mtime = 0
         os = 0xff
-        xfl = 4 if self.level == 0 else 0
+        if self.level == zlib_ng.Z_BEST_COMPRESSION:
+            xfl = 2
+        elif self.level == zlib_ng.Z_BEST_SPEED:
+            xfl = 4
+        else:
+            xfl = 0
         self.raw.write(struct.pack(
             "BBBBIBB", magic1, magic2, method, flags, mtime, os, xfl))
 
