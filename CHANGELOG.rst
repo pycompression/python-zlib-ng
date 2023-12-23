@@ -9,6 +9,9 @@ Changelog
 
 version 0.4.0-dev
 -----------------
++ Add a ``gzip_ng_threaded`` module that contains the ``gzip_ng_threaded.open``
+  function. This allows using multithreaded compression as well as escaping the
+  GIL.
 + The internal ``gzip_ng._GzipReader`` has been rewritten in C. As a result the
   overhead of decompressing files has significantly been reduced.
 + The ``gzip_ng._GzipReader`` in C is now used in ``gzip_ng.decompress``. The

@@ -2,7 +2,7 @@
 # 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022
 # Python Software Foundation; All Rights Reserved
 
-# This file is part of python-isal which is distributed under the
+# This file is part of python-zlib-ng which is distributed under the
 # PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2.
 
 import builtins
@@ -27,7 +27,7 @@ def open(filename, mode="rb", compresslevel=gzip_ng._COMPRESS_LEVEL_TRADEOFF,
     Comparable to gzip.open. This method is only usable for streamed reading
     and writing of objects. Seeking is not supported.
 
-    threads == 0 will defer to igzip.open. A threads < 0 will attempt to use
+    threads == 0 will defer to gzip_ng.open. A threads < 0 will attempt to use
     the number of threads in the system.
 
     :param filename: str, bytes or file-like object (supporting read or write
@@ -37,7 +37,7 @@ def open(filename, mode="rb", compresslevel=gzip_ng._COMPRESS_LEVEL_TRADEOFF,
     :param encoding: Passed through to the io.TextIOWrapper, if applicable.
     :param errors: Passed through to the io.TextIOWrapper, if applicable.
     :param newline: Passed through to the io.TextIOWrapper, if applicable.
-    :param threads: If 0 will defer to igzip.open, if < 0 will use all threads
+    :param threads: If 0 will defer to gzip_ng.open, if < 0 will use all threads
                     available to the system. Reading gzip can only
                     use one thread.
     :param block_size: Determines how large the blocks in the read/write
