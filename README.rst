@@ -42,7 +42,7 @@ by providing Python bindings for the zlib-ng library.
 This package provides Python bindings for the `zlib-ng
 <https://github.com/zlib-ng/zlib-ng>`_ library.
 
-``python-zlib-ng`` provides the bindings by offering two modules:
+``python-zlib-ng`` provides the bindings by offering three modules:
 
 + ``zlib_ng``: A drop-in replacement for the zlib module that uses zlib-ng to
   accelerate its performance.
@@ -50,6 +50,11 @@ This package provides Python bindings for the `zlib-ng
 + ``gzip_ng``: A drop-in replacement for the gzip module that uses ``zlib_ng``
   instead of ``zlib`` to perform its compression and checksum tasks, which
   improves performance.
+
++ ``gzip_ng_threaded`` offers an ``open`` function which returns buffered read
+  or write streams that can be used to read and write large files while
+  escaping the GIL using one or multiple threads. This functionality only
+  works for streaming, seeking is not supported.
 
 ``zlib_ng`` and ``gzip_ng`` are almost fully compatible with ``zlib`` and
 ``gzip`` from the Python standard library. There are some minor differences
@@ -68,6 +73,7 @@ The python-zlib-ng modules can be imported as follows
 
     from zlib_ng import zlib_ng
     from zlib_ng import gzip_ng
+    from zlib_ng import gzip_ng_threaded
 
 ``zlib_ng`` and ``gzip_ng`` are meant to be used as drop in replacements so
 their api and functions are the same as the stdlib's modules.
