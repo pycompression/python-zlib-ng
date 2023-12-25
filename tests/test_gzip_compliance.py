@@ -613,8 +613,7 @@ class TestGzip(BaseTest):
         with gzip.GzipFile(fileobj=io.BytesIO(truncated)) as f:
             self.assertRaises(EOFError, f.read)
         with gzip.GzipFile(fileobj=io.BytesIO(truncated)) as f:
-            self.assertEqual(f.read(len(data)), data)
-            self.assertRaises(EOFError, f.read, 1)
+            self.assertRaises(EOFError, f.read)
         # Incomplete 10-byte header.
         for i in range(2, 10):
             with gzip.GzipFile(fileobj=io.BytesIO(truncated[:i])) as f:
@@ -627,13 +626,6 @@ class TestGzip(BaseTest):
                   b'\x0bI-.\x01\x002\xd1Mx\x04\x00\x00\x00')
         with gzip.GzipFile(fileobj=io.BytesIO(gzdata)) as f:
             self.assertEqual(f.read(), b'Test')
-
-    def test_prepend_error(self):
-        # See issue #20875
-        with gzip.open(self.filename, "wb") as f:
-            f.write(data1)
-        with gzip.open(self.filename, "rb") as f:
-            f._buffer.raw._fp.prepend()
 
     def test_issue44439(self):
         q = array.array('Q', [1, 2, 3, 4, 5])

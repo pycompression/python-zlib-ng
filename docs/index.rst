@@ -113,6 +113,13 @@ API-documentation: zlib_ng.gzip_ng
       :members:
       :special-members: __init__
 
+===========================================
+API-documentation: zlib_ng.gzip_ng_threaded
+===========================================
+
+.. automodule:: zlib_ng.gzip_ng_threaded
+   :members: open
+
 ===============================
 python -m zlib_ng.gzip_ng usage
 ===============================
