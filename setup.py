@@ -123,7 +123,7 @@ def build_zlib_ng():
 
 setup(
     name="zlib-ng",
-    version="0.4.0",
+    version="0.5.0-dev",
     description="Drop-in replacement for zlib and gzip modules using zlib-ng",
     author="Leiden University Medical Center",
     author_email="r.h.p.vorderman@lumc.nl",  # A placeholder for now
