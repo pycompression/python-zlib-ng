@@ -7,7 +7,7 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
-version 0.4.0-dev
+version 0.4.0
 -----------------
 + Add a ``gzip_ng_threaded`` module that contains the ``gzip_ng_threaded.open``
   function. This allows using multithreaded compression as well as escaping the
