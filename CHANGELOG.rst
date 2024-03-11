@@ -9,6 +9,8 @@ Changelog
 
 version 0.5.0-dev
 -----------------
++ Fix a bug where streams that were passed to gzip_ng_threaded.open where
+  closed.
 + Fix compatibility with Python 3.13
 
 version 0.4.0
