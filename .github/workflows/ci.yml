@@ -160,6 +160,7 @@ jobs:
           - ubuntu-latest
           - macos-latest
           - windows-latest
+          - macos-14
         cibw_archs_linux: ["x86_64"]
         build_sdist: [true]
         include:
