@@ -105,7 +105,8 @@ def build_zlib_ng():
     run_args = dict(cwd=build_dir, env=build_env)
     if sys.platform == "darwin":  # Cmake does not work properly
         subprocess.run([os.path.join(build_dir, "configure")], **run_args)
-        subprocess.run(["gmake", "libz-ng.a"], **run_args)
+        make_program = "gmake" if shutil.which("gmake") else "make"
+        subprocess.run([make_program, "libz-ng.a"], **run_args)
     elif sys.platform == "linux":
         subprocess.run([os.path.join(build_dir, "configure")], **run_args)
         subprocess.run(["make", "libz-ng.a", "-j", str(cpu_count)], **run_args)

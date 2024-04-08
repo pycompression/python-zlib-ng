@@ -62,7 +62,9 @@ jobs:
           - "pypy-3.10"
         os: ["ubuntu-latest"]
         include:
-          - os: "macos-latest"
+          - os: "macos-latest"  # For m1 macos
+            python-version: "3.8"
+          - os: "macos-13"  # for x86 macos
             python-version: "3.8"
           - os: "windows-latest"
             python-version: "3.8"
