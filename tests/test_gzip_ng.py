@@ -293,12 +293,12 @@ def test_decompress_incorrect_length():
 
 
 def test_decompress_on_long_input():
-    # Ensure that a compressed payload with length bigger than 2**32 (ISIZE is overflown)
-    # can be decompressed. To avoid writing the whole uncompressed payload into memory,
-    # the test writes the compressed data in chunks. The payload consists almost exclusively
-    # of zeros to achieve an exteremely efficient compression rate, so that the compressed
-    # data also fits in memory.
-    
+    # Ensure that a compressed payload with length bigger than 2**32 (ISIZE is
+    # overflown) can be decompressed. To avoid writing the whole uncompressed payload
+    # into memory, the test writes the compressed data in chunks. The payload consists
+    # almost exclusively of zeros to achieve an exteremely efficient compression rate,
+    # so that the compressed data also fits in memory.
+
     buffered_stream = io.BytesIO()
     n = 20
     block_size = 2**n
