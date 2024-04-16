@@ -292,6 +292,31 @@ def test_decompress_incorrect_length():
     error.match("Incorrect length of data produced")
 
 
+def test_decompress_on_long_input():
+    # Ensure that a compressed payload with length bigger than 2**32 (ISIZE is
+    # overflown) can be decompressed. To avoid writing the whole uncompressed payload
+    # into memory, the test writes the compressed data in chunks. The payload consists
+    # almost exclusively of zeros to achieve an exteremely efficient compression rate,
+    # so that the compressed data also fits in memory.
+
+    buffered_stream = io.BytesIO()
+    n = 20
+    block_size = 2**n
+    iterations = 2**(32 - n)
+    zeros_block = bytes(block_size)
+
+    # To avoid writing the whole compressed data, we will write the compressed data
+    with gzip_ng.open(buffered_stream, "wb") as gz:
+        for _ in range(iterations):
+            gz.write(zeros_block)
+        gz.write(b"\x01" * 123)
+    buffered_stream.seek(0)
+    with gzip_ng.open(buffered_stream, "rb") as gz:
+        for _ in range(iterations):
+            assert zeros_block == gz.read(block_size)
+        assert gz.read() == b"\x01" * 123
+
+
 def test_decompress_incorrect_checksum():
     # Create a wrong checksum by using a non-default seed.
     wrong_checksum = zlib.crc32(DATA, 50)

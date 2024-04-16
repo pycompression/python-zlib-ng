@@ -7,6 +7,10 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
+version 0.4.3
+-----------------
++ Fix a bug where files larger than 4GB could not be decompressed.
+
 version 0.4.2
 -----------------
 + Fix a reference counting error that happened on module initialization and
