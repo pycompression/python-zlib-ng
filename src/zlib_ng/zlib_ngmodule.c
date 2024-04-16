@@ -2590,12 +2590,11 @@ GzipReader_read_into_buffer(GzipReader *self, uint8_t *out_buffer, size_t out_bu
                         return -1;
                     }
                     uint32_t length = load_u32_le(current_pos);
-                    current_pos += 4; 
-                    if (length != (uint32_t)self->zst.total_out) {
+                    current_pos += 4;
+                    // ISIZE is the length of the original data modulo 2^32
+                    if (length != 0xFFFFFFFFUL & self->zst.total_out) {
                         Py_BLOCK_THREADS;
-                        PyErr_Format(BadGzipFile, 
-                            "Incorrect length of data produced. ISIZE: %u, actual size mod 2^32: %u",
-                            length, (uint32_t)self->zst.total_out);
+                        PyErr_SetString(BadGzipFile, "Incorrect length of data produced");
                         return -1;
                     }
                     self->stream_phase = GzipReader_NULL_BYTES;

@@ -294,12 +294,18 @@ def test_decompress_incorrect_length():
 
 def test_decompress_on_long_input():
     # Ensure that a compressed payload with length bigger than 2**32 (ISIZE is overflown)
-    # can be decompressed.
+    # can be decompressed. To avoid writing the whole uncompressed payload into memory,
+    # the test writes the compressed data in chunks. The payload consists almost exclusively
+    # of zeros to achieve an exteremely efficient compression rate, so that the compressed
+    # data also fits in memory.
+    
     buffered_stream = io.BytesIO()
     n = 20
     block_size = 2**n
     iterations = 2**(32 - n)
-    zeros_block = b"\x00" * block_size
+    zeros_block = bytes(block_size)
+
+    # To avoid writing the whole compressed data, we will write the compressed data
     with gzip_ng.open(buffered_stream, "wb") as gz:
         for _ in range(iterations):
             gz.write(zeros_block)
