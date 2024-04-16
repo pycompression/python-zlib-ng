@@ -2592,7 +2592,7 @@ GzipReader_read_into_buffer(GzipReader *self, uint8_t *out_buffer, size_t out_bu
                     uint32_t length = load_u32_le(current_pos);
                     current_pos += 4;
                     // ISIZE is the length of the original data modulo 2^32
-                    if (length != 0xFFFFFFFFUL & self->zst.total_out) {
+                    if (length != (0xFFFFFFFFUL & self->zst.total_out)) {
                         Py_BLOCK_THREADS;
                         PyErr_SetString(BadGzipFile, "Incorrect length of data produced");
                         return -1;
