@@ -162,7 +162,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
+          - macos-13
           - windows-latest
         cibw_archs_linux: ["x86_64"]
         build_sdist: [true]
