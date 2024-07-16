@@ -2,9 +2,7 @@ Release checklist
 - [ ] Check outstanding issues on JIRA and Github.
 - [ ] Check [latest documentation](https://python-zlib-ng.readthedocs.io/en/latest/) looks fine.
 - [ ] Create a release branch.
-  - [ ] Set version to a stable number.
   - [ ] Change current development version in `CHANGELOG.rst` to stable version.
-  - [ ] Change the version in `__init__.py`
 - [ ] Merge the release branch into `main`.
 - [ ] Created an annotated tag with the stable version number. Include changes 
 from CHANGELOG.rst.
