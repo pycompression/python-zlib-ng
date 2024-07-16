@@ -16,7 +16,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Set up Python 3.8
@@ -36,7 +36,7 @@ jobs:
           - twine_check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Set up Python 3.8
@@ -69,7 +69,7 @@ jobs:
           - os: "windows-latest"
             python-version: "3.8"
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Set up Python ${{ matrix.python-version }}
@@ -97,7 +97,7 @@ jobs:
         distro: [ "ubuntu_latest" ]
         arch: ["aarch64"]
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - uses: uraimo/run-on-arch-action@v2.2.0
@@ -132,7 +132,7 @@ jobs:
           - os: "ubuntu-latest"
             python_version: "pypy"
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Install miniconda.
@@ -170,9 +170,10 @@ jobs:
           - os: "ubuntu-latest"
             cibw_archs_linux: "aarch64"
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0  # Fetch everything to get accurately versioned tag.
       - uses: actions/setup-python@v2
         name: Install Python
       - name: Install cibuildwheel twine build
