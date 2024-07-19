@@ -12,6 +12,8 @@ version 0.5.0-dev
 + Wheels are now build for MacOS arm64 architectures.
 + Fix a bug where READ and WRITE in zlib_ng.gzip_ng were inconsistent with the
   values in gzip on Python 3.13
++ Small simplifications to the ``gzip_ng.compress`` and ``gzip_ng.decompress``
+  functions, which should lead to less overhead.
 
 version 0.4.3
 -----------------
