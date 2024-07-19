@@ -200,8 +200,7 @@ def decompress(data):
     """Decompress a gzip compressed string in one shot.
     Return the decompressed string.
     """
-    fp = io.BytesIO(data)
-    reader = _GzipReader(fp, max(len(data), 16))
+    reader = _GzipReader(data)
     return reader.readall()
 
 
