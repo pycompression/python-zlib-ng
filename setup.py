@@ -16,6 +16,8 @@ from pathlib import Path
 from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext
 
+import versioningit
+
 ZLIB_NG_SOURCE = os.path.join("src", "zlib_ng", "zlib-ng")
 
 SYSTEM_IS_UNIX = (sys.platform.startswith("linux") or
@@ -124,7 +126,7 @@ def build_zlib_ng():
 
 setup(
     name="zlib-ng",
-    version="0.4.3",
+    version=versioningit.get_version(),
     description="Drop-in replacement for zlib and gzip modules using zlib-ng",
     author="Leiden University Medical Center",
     author_email="r.h.p.vorderman@lumc.nl",  # A placeholder for now

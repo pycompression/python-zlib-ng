@@ -16,7 +16,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Set up Python 3.8
@@ -36,7 +36,7 @@ jobs:
           - twine_check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Set up Python 3.8
@@ -58,18 +58,19 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
+          - "3.13-dev"
           - "pypy-3.9"
           - "pypy-3.10"
         os: ["ubuntu-latest"]
         include:
           - os: "macos-14"  # For m1 macos
             python-version: "3.12"
-          - os: "macos-latest"  # for x86 macos
+          - os: "macos-13"  # for x86 macos
             python-version: "3.8"
           - os: "windows-latest"
             python-version: "3.8"
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Set up Python ${{ matrix.python-version }}
@@ -94,22 +95,25 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        distro: [ "ubuntu_latest" ]
-        arch: ["aarch64"]
+        python_version:
+          - "3.8"
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: uraimo/run-on-arch-action@v2.2.0
+      - uses: uraimo/run-on-arch-action@v2.5.0
         name: Build & run test
         with:
-          arch: ${{ matrix.arch }}
-          distro: ${{ matrix.distro }}
-          install: |
-            apt-get update -q -y
-            apt-get install -q -y python3 python3-pip tox cmake git googletest
-          run: |
-            tox
+          arch: none
+          distro: none
+          base_image: "--platform=linux/arm64 quay.io/pypa/manylinux2014_aarch64"
+          # versioningit needs an accessible git repository but the container
+          # is run as root, which is different from the repository user.
+          # use git config to override this.
+          run: |-
+            git config --global --add safe.directory $PWD
+            CFLAGS="-DNDEBUG -g0" python${{matrix.python_version}} -m pip install . pytest
+            python${{matrix.python_version}} -m pytest tests
 
   # Test if the python-zlib-ng conda package can be build. Which is linked
   # dynamically to the conda zlib-ng package.
@@ -122,17 +126,21 @@ jobs:
         shell: bash -l {0}
     strategy:
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        os:
+          - "ubuntu-latest"
+          - "macos-13"
+          - "macos-14"
+          - "windows-latest"
         python_version: [ "python" ]
         include:
           - os: "ubuntu-latest"
             python_version: "pypy"
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: Install miniconda.
-        uses: conda-incubator/setup-miniconda@v2.0.1 # https://github.com/conda-incubator/setup-miniconda.
+        uses: conda-incubator/setup-miniconda@v3 # https://github.com/conda-incubator/setup-miniconda.
         with:
           channels: conda-forge,defaults
       - name: Install requirements (universal)
@@ -158,7 +166,8 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
+          - macos-13
+          - macos-14
           - windows-latest
         cibw_archs_linux: ["x86_64"]
         build_sdist: [true]
@@ -166,9 +175,10 @@ jobs:
           - os: "ubuntu-latest"
             cibw_archs_linux: "aarch64"
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0  # Fetch everything to get accurately versioned tag.
       - uses: actions/setup-python@v2
         name: Install Python
       - name: Install cibuildwheel twine build
@@ -187,7 +197,8 @@ jobs:
       - name: Build wheels
         run: cibuildwheel --output-dir dist
         env:
-          CIBW_SKIP: "*-win32 *-manylinux_i686"  # Skip 32 bit
+          # Skip 32 bit, macosx_arm64 causes issues on cpython 3.8
+          CIBW_SKIP: "*-win32 *-manylinux_i686 cp38-macosx_arm64"
           CIBW_ARCHS_LINUX: ${{ matrix.cibw_archs_linux }}
           CIBW_TEST_REQUIRES: "pytest"
           # Simple tests that requires the project to be build correctly

@@ -7,6 +7,14 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
+version 0.5.0
+-----------------
++ Wheels are now build for MacOS arm64 architectures.
++ Fix a bug where READ and WRITE in zlib_ng.gzip_ng were inconsistent with the
+  values in gzip on Python 3.13
++ Small simplifications to the ``gzip_ng.compress`` and ``gzip_ng.decompress``
+  functions, which should lead to less overhead.
+
 version 0.4.3
 -----------------
 + Fix a bug where files larger than 4GB could not be decompressed.
