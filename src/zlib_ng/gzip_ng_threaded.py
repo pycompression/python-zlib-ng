@@ -98,7 +98,8 @@ class _ThreadedGzipReader(io.RawIOBase):
         self.exception = None
         self.buffer = io.BytesIO()
         self.block_size = block_size
-        self.worker = threading.Thread(target=self._decompress)
+        # Using a daemon thread prevents programs freezing on error.
+        self.worker = threading.Thread(target=self._decompress, daemon=True)
         self._closed = False
         self.running = True
         self.worker.start()
@@ -231,9 +232,10 @@ class _ThreadedGzipWriter(io.RawIOBase):
                 queue.Queue(queue_size) for _ in range(threads)]
             self.output_queues: List[queue.Queue[Tuple[bytes, int, int]]] = [
                 queue.Queue(queue_size) for _ in range(threads)]
-            self.output_worker = threading.Thread(target=self._write)
+            # Using daemon threads prevents a program freezing on error.
+            self.output_worker = threading.Thread(target=self._write, daemon=True)
             self.compression_workers = [
-                threading.Thread(target=self._compress, args=(i,))
+                threading.Thread(target=self._compress, args=(i,), daemon=True)
                 for i in range(threads)
             ]
         elif threads == 1:
@@ -241,7 +243,7 @@ class _ThreadedGzipWriter(io.RawIOBase):
             self.output_queues = []
             self.compression_workers = []
             self.output_worker = threading.Thread(
-                target=self._compress_and_write)
+                target=self._compress_and_write, daemon=True)
         else:
             raise ValueError(f"threads should be at least 1, got {threads}")
         self.threads = threads
