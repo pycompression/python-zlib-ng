@@ -100,8 +100,7 @@ class _ThreadedGzipReader(io.RawIOBase):
         self.block_size = block_size
         self.worker = threading.Thread(target=self._decompress)
         self._closed = False
-        self.running = True
-        self.worker.start()
+        self.running = False
 
     def _check_closed(self, msg=None):
         if self._closed:
@@ -125,8 +124,19 @@ class _ThreadedGzipReader(io.RawIOBase):
                 except queue.Full:
                     pass
 
+    def _start(self):
+        if not self.running:
+            self.running = True
+            self.worker.start()
+
+    def _stop(self):
+        if self.running:
+            self.running = False
+            self.worker.join()
+
     def readinto(self, b):
         self._check_closed()
+        self._start()
         result = self.buffer.readinto(b)
         if result == 0:
             while True:
@@ -154,8 +164,7 @@ class _ThreadedGzipReader(io.RawIOBase):
     def close(self) -> None:
         if self._closed:
             return
-        self.running = False
-        self.worker.join()
+        self._stop()
         self.fileobj.close()
         if self.closefd:
             self.raw.close()
@@ -252,7 +261,6 @@ class _ThreadedGzipWriter(io.RawIOBase):
         self.raw, self.closefd = open_as_binary_stream(filename, mode)
         self._closed = False
         self._write_gzip_header()
-        self.start()
 
     def _check_closed(self, msg=None):
         if self._closed:
@@ -275,21 +283,24 @@ class _ThreadedGzipWriter(io.RawIOBase):
         self.raw.write(struct.pack(
             "BBBBIBB", magic1, magic2, method, flags, mtime, os, xfl))
 
-    def start(self):
-        self.running = True
-        self.output_worker.start()
-        for worker in self.compression_workers:
-            worker.start()
+    def _start(self):
+        if not self.running:
+            self.running = True
+            self.output_worker.start()
+            for worker in self.compression_workers:
+                worker.start()
 
     def stop(self):
         """Stop, but do not care for remaining work"""
-        self.running = False
-        for worker in self.compression_workers:
-            worker.join()
-        self.output_worker.join()
+        if self.running:
+            self.running = False
+            for worker in self.compression_workers:
+                worker.join()
+            self.output_worker.join()
 
     def write(self, b) -> int:
         self._check_closed()
+        self._start()
         with self.lock:
             if self.exception:
                 raise self.exception
