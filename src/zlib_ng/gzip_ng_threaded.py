@@ -11,6 +11,7 @@ import multiprocessing
 import os
 import queue
 import struct
+import sys
 import threading
 from typing import List, Optional, Tuple
 
@@ -124,7 +125,8 @@ class _ThreadedGzipReader(io.RawIOBase):
                     block_queue.put(data, timeout=0.05)
                     break
                 except queue.Full:
-                    pass
+                    if sys.is_finalizing():
+                        return
 
     def readinto(self, b):
         self._check_closed()
