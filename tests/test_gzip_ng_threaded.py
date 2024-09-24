@@ -105,7 +105,6 @@ def test_threaded_write_error(threads):
         threads=threads, block_size=8 * 1024)
     # Bypass the write method which should not allow blocks larger than
     # block_size.
-    f._start()
     f.input_queues[0].put((os.urandom(1024 * 64), b""))
     with pytest.raises(OverflowError) as error:
         f.close()

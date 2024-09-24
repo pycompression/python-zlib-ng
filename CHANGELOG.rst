@@ -7,11 +7,10 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
-version 0.5.1
+version 0.5.1-dev
 -----------------
-+ Fix a bug where ``gzip_ng_threaded.open`` could
-  cause a hang when the program exited and the program was not used with a
-  context manager.
++ Threaded reading and writing do no longer block exiting when an exception
+  occurs in the main thread.
 
 version 0.5.0
 -----------------

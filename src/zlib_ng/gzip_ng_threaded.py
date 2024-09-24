@@ -100,7 +100,9 @@ class _ThreadedGzipReader(io.RawIOBase):
         self.block_size = block_size
         self.worker = threading.Thread(target=self._decompress)
         self._closed = False
-        self.running = False
+        self.running = True
+        self._calling_thread = threading.current_thread()
+        self.worker.start()
 
     def _check_closed(self, msg=None):
         if self._closed:
@@ -109,7 +111,7 @@ class _ThreadedGzipReader(io.RawIOBase):
     def _decompress(self):
         block_size = self.block_size
         block_queue = self.queue
-        while self.running:
+        while self.running and self._calling_thread.is_alive():
             try:
                 data = self.fileobj.read(block_size)
             except Exception as e:
@@ -117,26 +119,15 @@ class _ThreadedGzipReader(io.RawIOBase):
                 return
             if not data:
                 return
-            while self.running:
+            while self.running and self._calling_thread.is_alive():
                 try:
                     block_queue.put(data, timeout=0.05)
                     break
                 except queue.Full:
                     pass
 
-    def _start(self):
-        if not self.running:
-            self.running = True
-            self.worker.start()
-
-    def _stop(self):
-        if self.running:
-            self.running = False
-            self.worker.join()
-
     def readinto(self, b):
         self._check_closed()
-        self._start()
         result = self.buffer.readinto(b)
         if result == 0:
             while True:
@@ -164,7 +155,8 @@ class _ThreadedGzipReader(io.RawIOBase):
     def close(self) -> None:
         if self._closed:
             return
-        self._stop()
+        self.running = False
+        self.worker.join()
         self.fileobj.close()
         if self.closefd:
             self.raw.close()
@@ -224,6 +216,7 @@ class _ThreadedGzipWriter(io.RawIOBase):
         if "b" not in mode:
             mode += "b"
         self.lock = threading.Lock()
+        self._calling_thread = threading.current_thread()
         self.exception: Optional[Exception] = None
         self.level = level
         self.previous_block = b""
@@ -261,6 +254,7 @@ class _ThreadedGzipWriter(io.RawIOBase):
         self.raw, self.closefd = open_as_binary_stream(filename, mode)
         self._closed = False
         self._write_gzip_header()
+        self.start()
 
     def _check_closed(self, msg=None):
         if self._closed:
@@ -283,24 +277,21 @@ class _ThreadedGzipWriter(io.RawIOBase):
         self.raw.write(struct.pack(
             "BBBBIBB", magic1, magic2, method, flags, mtime, os, xfl))
 
-    def _start(self):
-        if not self.running:
-            self.running = True
-            self.output_worker.start()
-            for worker in self.compression_workers:
-                worker.start()
+    def start(self):
+        self.running = True
+        self.output_worker.start()
+        for worker in self.compression_workers:
+            worker.start()
 
     def stop(self):
         """Stop, but do not care for remaining work"""
-        if self.running:
-            self.running = False
-            for worker in self.compression_workers:
-                worker.join()
-            self.output_worker.join()
+        self.running = False
+        for worker in self.compression_workers:
+            worker.join()
+        self.output_worker.join()
 
     def write(self, b) -> int:
         self._check_closed()
-        self._start()
         with self.lock:
             if self.exception:
                 raise self.exception
@@ -360,7 +351,7 @@ class _ThreadedGzipWriter(io.RawIOBase):
         in_queue = self.input_queues[index]
         out_queue = self.output_queues[index]
         compressor: zlib_ng._ParallelCompress = self.compressors[index]
-        while True:
+        while self._calling_thread.is_alive():
             try:
                 data, zdict = in_queue.get(timeout=0.05)
             except queue.Empty:
@@ -383,7 +374,7 @@ class _ThreadedGzipWriter(io.RawIOBase):
         fp = self.raw
         total_crc = 0
         size = 0
-        while True:
+        while self._calling_thread.is_alive():
             out_index = index % self.threads
             output_queue = output_queues[out_index]
             try:
@@ -408,7 +399,7 @@ class _ThreadedGzipWriter(io.RawIOBase):
         size = 0
         in_queue = self.input_queues[0]
         compressor = self.compressors[0]
-        while True:
+        while self._calling_thread.is_alive():
             try:
                 data, zdict = in_queue.get(timeout=0.05)
             except queue.Empty:
