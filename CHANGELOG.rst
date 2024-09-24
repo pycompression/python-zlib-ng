@@ -7,12 +7,6 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
-version 0.5.1
------------------
-+ Fix a bug where ``gzip_ng_threaded.open`` could
-  cause a hang when the program exited and the program was not used with a
-  context manager.
-
 version 0.5.0
 -----------------
 + Wheels are now build for MacOS arm64 architectures.
