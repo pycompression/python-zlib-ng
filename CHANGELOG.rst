@@ -7,7 +7,7 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
-version 0.5.1-dev
+version 0.5.1
 -----------------
 + Fix a bug where flushing in threaded mode did not write the data to the
   output file.
