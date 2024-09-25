@@ -362,11 +362,11 @@ class _ThreadedGzipWriter(io.RawIOBase):
         in_queue = self.input_queues[index]
         out_queue = self.output_queues[index]
         compressor: zlib_ng._ParallelCompress = self.compressors[index]
-        while self._calling_thread.is_alive():
+        while True:
             try:
                 data, zdict = in_queue.get(timeout=0.05)
             except queue.Empty:
-                if not self.running:
+                if not (self.running and self._calling_thread.is_alive()):
                     return
                 continue
             try:
@@ -382,13 +382,13 @@ class _ThreadedGzipWriter(io.RawIOBase):
     def _write(self):
         index = 0
         output_queues = self.output_queues
-        while self._calling_thread.is_alive():
+        while True:
             out_index = index % self.threads
             output_queue = output_queues[out_index]
             try:
                 compressed, crc, data_length = output_queue.get(timeout=0.05)
             except queue.Empty:
-                if not self.running:
+                if not (self.running and self._calling_thread.is_alive()):
                     return
                 continue
             self._crc = zlib_ng.crc32_combine(self._crc, crc, data_length)
@@ -402,11 +402,11 @@ class _ThreadedGzipWriter(io.RawIOBase):
             raise SystemError("Compress_and_write is for one thread only")
         in_queue = self.input_queues[0]
         compressor = self.compressors[0]
-        while self._calling_thread.is_alive():
+        while True:
             try:
                 data, zdict = in_queue.get(timeout=0.05)
             except queue.Empty:
-                if not self.running:
+                if not (self.running and self._calling_thread.is_alive()):
                     return
                 continue
             try:
