@@ -3,6 +3,7 @@ Release checklist
 - [ ] Check [latest documentation](https://python-zlib-ng.readthedocs.io/en/latest/) looks fine.
 - [ ] Create a release branch.
   - [ ] Change current development version in `CHANGELOG.rst` to stable version.
+- [ ] Check if the address sanitizer does not find any problems using `tox -e asan`
 - [ ] Merge the release branch into `main`.
 - [ ] Created an annotated tag with the stable version number. Include changes 
 from CHANGELOG.rst.
