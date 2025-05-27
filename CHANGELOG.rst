@@ -11,6 +11,7 @@ version develop
 -----------------
 + Python 3.8 is no longer supported.
 + Switched to setuptools-scm for building the package rather than versioningit.
++ Test files are added to the source distribution.
 
 version 0.5.1
 -----------------
