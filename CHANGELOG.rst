@@ -7,6 +7,12 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
+version develop
+-----------------
++ Python 3.8 is no longer supported.
++ Switched to setuptools-scm for building the package rather than versioningit.
++ Test files are added to the source distribution.
+
 version 0.5.1
 -----------------
 + Fix a bug where flushing in threaded mode did not write the data to the
