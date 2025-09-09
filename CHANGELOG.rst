@@ -11,6 +11,10 @@ version develop
 -----------------
 + Python 3.14 is supported.
 + Python 3.8 and 3.9 are no longer supported.
++ Fix an issue where flushing using igzip_threaded caused a gzip end of stream
+  and started a new gzip stream. In essence creating a concatenated gzip
+  stream. Now it is in concordance with how single threaded gzip streams
+  are flushed using Z_SYNC_FLUSH.
 + Switched to setuptools-scm for building the package rather than versioningit.
 + Test files are added to the source distribution.
 
