@@ -9,7 +9,8 @@ Changelog
 
 version develop
 -----------------
-+ Python 3.8 is no longer supported.
++ Python 3.14 is supported.
++ Python 3.8 and 3.9 are no longer supported.
 + Switched to setuptools-scm for building the package rather than versioningit.
 + Test files are added to the source distribution.
 
