@@ -13,10 +13,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-from setuptools import Extension, find_packages, setup
+from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
-
-import versioningit
 
 ZLIB_NG_SOURCE = os.path.join("src", "zlib_ng", "zlib-ng")
 
@@ -125,43 +123,6 @@ def build_zlib_ng():
 
 
 setup(
-    name="zlib-ng",
-    version=versioningit.get_version(),
-    description="Drop-in replacement for zlib and gzip modules using zlib-ng",
-    author="Leiden University Medical Center",
-    author_email="r.h.p.vorderman@lumc.nl",  # A placeholder for now
-    long_description=Path("README.rst").read_text(),
-    long_description_content_type="text/x-rst",
     cmdclass={"build_ext": BuildZlibNGExt},
-    license="PSF-2.0",
-    keywords="zlib-ng zlib compression deflate gzip",
-    zip_safe=False,
-    packages=find_packages('src'),
-    package_dir={'': 'src'},
-    package_data={'zlib_ng': [
-        '*.pyi', 'py.typed',
-        # Include zlib-ng LICENSE and other relevant files with the binary distribution.
-        'zlib-ng/LICENSE.md', 'zlib-ng/README.md']},
-    url="https://github.com/pycompression/python-zlib-ng",
-    classifiers=[
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Programming Language :: Python :: Implementation :: PyPy",
-        "Programming Language :: C",
-        "Development Status :: 4 - Beta",
-        "Topic :: System :: Archiving :: Compression",
-        "License :: OSI Approved :: Python Software Foundation License",
-        "Operating System :: POSIX :: Linux",
-        "Operating System :: MacOS",
-        "Operating System :: Microsoft :: Windows",
-    ],
-    python_requires=">=3.8",  # Earliest version still tested.
     ext_modules=EXTENSIONS
 )

@@ -7,6 +7,22 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
+version 1.0.0
+-----------------
+The library has been running without issues as a dependency in quite a few
+projects and is now stable enough for the first major version.
+
++ Updated bundled zlib-ng to 2.2.5.
++ Python 3.14 is supported.
++ Python 3.8 and 3.9 are no longer supported.
++ Fix an issue where flushing using igzip_threaded caused a gzip end of stream
+  and started a new gzip stream. In essence creating a concatenated gzip
+  stream. Now it is in concordance with how single threaded gzip streams
+  are flushed using Z_SYNC_FLUSH.
++ Switched to setuptools-scm for building the package rather than versioningit.
++ Test files are added to the source distribution.
++ Fix an issue where some tests failed because they ignored PYTHONPATH.
+
 version 0.5.1
 -----------------
 + Fix a bug where flushing in threaded mode did not write the data to the

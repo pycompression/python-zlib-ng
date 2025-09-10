@@ -804,6 +804,19 @@ class TestCommandLine(unittest.TestCase):
         self.assertEqual(err, b'')
         self.assertEqual(out, self.data)
 
+    # The following tests use assert_python_failure or assert_python_ok.
+    #
+    # If the env_vars argument to assert_python_failure or assert_python_ok
+    # is empty the test will run in isolated mode (-I) which means that the
+    # PYTHONPATH environment variable will be ignored and the test fails
+    # because the isal module can not be found, or the test is run usung the
+    # system installed version of the module instead of the newly built
+    # module that should be tested.
+    #
+    # By adding a dummy entry to the env_vars argument the isolated mode is
+    # not used and the PYTHONPATH environment variable is not ignored and
+    # the test works as expected.
+
     @create_and_remove_directory(TEMPDIR)
     def test_decompress_infile_outfile(self):
         gzipname = os.path.join(TEMPDIR, 'testgzip.gz')
@@ -812,7 +825,7 @@ class TestCommandLine(unittest.TestCase):
         with gzip.open(gzipname, mode='wb') as fp:
             fp.write(self.data)
         rc, out, err = assert_python_ok('-m', 'zlib_ng.gzip_ng', '-d',
-                                        gzipname)
+                                        gzipname, **{'_dummy': '1'})
 
         with open(os.path.join(TEMPDIR, "testgzip"), "rb") as gunziped:
             self.assertEqual(gunziped.read(), self.data)
@@ -824,7 +837,7 @@ class TestCommandLine(unittest.TestCase):
 
     def test_decompress_infile_outfile_error(self):
         rc, out, err = assert_python_failure('-m', 'zlib_ng.gzip_ng', '-d',
-                                             'thisisatest.out')
+                                             'thisisatest.out', **{'_dummy': '1'})
         self.assertIn(b"filename doesn't end in .gz: 'thisisatest.out'",
                       err.strip())
         self.assertEqual(rc, 1)
@@ -849,7 +862,7 @@ class TestCommandLine(unittest.TestCase):
             fp.write(self.data)
 
         rc, out, err = assert_python_ok('-m', 'zlib_ng.gzip_ng',
-                                        local_testgzip)
+                                        local_testgzip, **{'_dummy': '1'})
 
         self.assertTrue(os.path.exists(gzipname))
         self.assertEqual(out, b'')
@@ -867,7 +880,8 @@ class TestCommandLine(unittest.TestCase):
                     fp.write(self.data)
 
                 rc, out, err = assert_python_ok('-m', 'zlib_ng.gzip_ng',
-                                                compress_level, local_testgzip)
+                                                compress_level, local_testgzip,
+                                                **{'_dummy': '1'})
 
                 self.assertTrue(os.path.exists(gzipname))
                 self.assertEqual(out, b'')
@@ -877,7 +891,7 @@ class TestCommandLine(unittest.TestCase):
 
     def test_compress_fast_best_are_exclusive(self):
         rc, out, err = assert_python_failure('-m', 'zlib_ng.gzip_ng', '--fast',
-                                             '--best')
+                                             '--best', **{'_dummy': '1'})
         self.assertIn(
             b"error: argument -9/--best: not allowed with argument -1/--fast",
             err)
@@ -885,7 +899,7 @@ class TestCommandLine(unittest.TestCase):
 
     def test_decompress_cannot_have_flags_compression(self):
         rc, out, err = assert_python_failure('-m', 'zlib_ng.gzip_ng', '--fast',
-                                             '-d')
+                                             '-d', **{'_dummy': '1'})
         self.assertIn(
             b'error: argument -d/--decompress: not allowed with argument -1/--fast',
             err)
