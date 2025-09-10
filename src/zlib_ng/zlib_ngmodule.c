@@ -2968,11 +2968,14 @@ static struct PyModuleDef zlibmodule = {
 PyMODINIT_FUNC
 PyInit_zlib_ng(void)
 {
-    PyObject *m, *ver;
-    m = PyModule_Create(&zlibmodule);
+    PyObject *m = PyModule_Create(&zlibmodule);
     if (m == NULL) {
         return NULL;
     }
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+#endif
+
     if (PyType_Ready(&Comptype) < 0) {
         return NULL;
     }
@@ -3050,7 +3053,7 @@ PyInit_zlib_ng(void)
     PyModule_AddIntMacro(m, Z_FINISH);
     PyModule_AddIntMacro(m, Z_BLOCK);
     PyModule_AddIntMacro(m, Z_TREES);
-    ver = PyUnicode_FromString(ZLIBNG_VERSION);
+    PyObject *ver = PyUnicode_FromString(ZLIBNG_VERSION);
     if (ver != NULL)
         PyModule_AddObject(m, "ZLIBNG_VERSION", ver);
 
