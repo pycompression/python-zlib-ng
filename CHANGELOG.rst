@@ -17,6 +17,7 @@ version develop
   are flushed using Z_SYNC_FLUSH.
 + Switched to setuptools-scm for building the package rather than versioningit.
 + Test files are added to the source distribution.
++ Fix an issue where some tests failed because they ignored PYTHONPATH.
 
 version 0.5.1
 -----------------
