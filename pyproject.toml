@@ -30,7 +30,7 @@ classifiers = [
         "Operating System :: Microsoft :: Windows",
 ]
 urls.homepage = "https://github.com/pycompression/python-zlib-ng"
-urls.documentation = "python-zlib-ng.readthedocs.io"
+urls.documentation = "https://python-zlib-ng.readthedocs.io"
 
 [tool.setuptools_scm]
 version_file = "src/zlib_ng/_version.py"
