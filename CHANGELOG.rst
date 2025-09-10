@@ -7,8 +7,11 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
-version develop
+version 1.0.0
 -----------------
+The library has been running without issues as a dependency in quite a few
+projects and is now stable enough for the first major version.
+
 + Python 3.14 is supported.
 + Python 3.8 and 3.9 are no longer supported.
 + Fix an issue where flushing using igzip_threaded caused a gzip end of stream
