@@ -12,6 +12,7 @@ version 1.0.0
 The library has been running without issues as a dependency in quite a few
 projects and is now stable enough for the first major version.
 
++ Updated bundled zlib-ng to 2.2.5.
 + Python 3.14 is supported.
 + Python 3.8 and 3.9 are no longer supported.
 + Fix an issue where flushing using igzip_threaded caused a gzip end of stream
