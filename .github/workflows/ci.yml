@@ -184,10 +184,10 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0  # Fetch everything to get accurately versioned tag.
-      - if: ${{ matix.os == 'windows-11-arm' }}
+      - if: ${{ matrix.os == 'windows-11-arm' }}
         uses: actions/setup-python@v5
         name: Install Python
-      - if: ${{ matix.os != 'windows-11-arm' }}
+      - if: ${{ matrix.os != 'windows-11-arm' }}
         uses: actions/setup-python@v2 # Some issues where caused by higher versions.
         name: Install Python
       - name: Install cibuildwheel twine build
