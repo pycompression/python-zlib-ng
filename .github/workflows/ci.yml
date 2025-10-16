@@ -221,7 +221,7 @@ jobs:
             {project}/tests/test_gzip_ng.py
           # Windows does not have the test module in the included python.
           # Run compatibility tests instead.
-          CIBW_BEFORE_BUILD_WINDOWS: "Get-ChildItem env:* | sort-object name"
+          CIBW_BEFORE_BUILD_WINDOWS: "SET"
           CIBW_TEST_COMMAND_WINDOWS: >-
             pytest {project}/tests/test_compat.py
             {project}/tests/test_gzip_ng.py
