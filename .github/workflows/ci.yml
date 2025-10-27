@@ -9,7 +9,6 @@ on:
     branches:
       - develop
       - main
-      - win-arm64
     tags:
       - "*"
 
@@ -160,14 +159,14 @@ jobs:
           PYTHON_ZLIB_NG_LINK_DYNAMIC: True
 
   deploy:
-    # if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
     runs-on: ${{ matrix.os }}
     needs:
       - lint
       - package-checks
-      # - test-static
-      # - test-dynamic
-      # - test-arch
+      - test-static
+      - test-dynamic
+      - test-arch
     strategy:
       matrix:
         os:
@@ -247,17 +246,17 @@ jobs:
         with:
           name: "dist-${{ runner.os }}-${{ runner.arch }}-${{ matrix.cibw_archs_linux }}"
           path: "dist/"
-      # - name: Publish package to TestPyPI
-      #   # pypa/gh-action-pypi-publish@master does not work on OSX
-      #   # Alpha, Beta and dev releases contain a - in the tag.
-      #   if: contains(github.ref, '-') && startsWith(github.ref, 'refs/tags')
-      #   run: twine upload --skip-existing -r testpypi dist/*
-      #   env:
-      #     TWINE_USERNAME: __token__
-      #     TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
-      # - name: Publish package to PyPI
-      #   if: "!contains(github.ref, '-') && startsWith(github.ref, 'refs/tags')"
-      #   run: twine upload --skip-existing dist/*
-      #   env:
-      #     TWINE_USERNAME: __token__
-      #     TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Publish package to TestPyPI
+        # pypa/gh-action-pypi-publish@master does not work on OSX
+        # Alpha, Beta and dev releases contain a - in the tag.
+        if: contains(github.ref, '-') && startsWith(github.ref, 'refs/tags')
+        run: twine upload --skip-existing -r testpypi dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+      - name: Publish package to PyPI
+        if: "!contains(github.ref, '-') && startsWith(github.ref, 'refs/tags')"
+        run: twine upload --skip-existing dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
