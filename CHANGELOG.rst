@@ -7,6 +7,10 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
+version 1.0.1-dev
+-----------------
++ Wheels are now built for Windows arm64 architectures.
+
 version 1.0.0
 -----------------
 The library has been running without issues as a dependency in quite a few
