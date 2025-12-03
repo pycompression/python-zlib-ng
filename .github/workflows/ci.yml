@@ -69,6 +69,8 @@ jobs:
             python-version: "3.10"
           - os: "windows-latest"
             python-version: "3.10"
+          - os: "windows-11-arm"
+            python-version: "3.11"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -83,6 +85,8 @@ jobs:
       - name: Set MSVC developer prompt
         uses: ilammy/msvc-dev-cmd@v1
         if: runner.os == 'Windows'
+        with:
+          arch: ${{ matrix.os == 'windows-11-arm' && 'arm64' || 'x64' }}
       - name: Install build dependencies (MacOS)
         run: brew install make
         if: runner.os == 'macOS'
@@ -170,6 +174,7 @@ jobs:
           - macos-13
           - macos-latest
           - windows-latest
+          - windows-11-arm
         cibw_archs_linux: ["x86_64"]
         build_sdist: [true]
         include:
@@ -180,7 +185,11 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0  # Fetch everything to get accurately versioned tag.
-      - uses: actions/setup-python@v2 # Some issues where caused by higher versions.
+      - if: ${{ matrix.os == 'windows-11-arm' }}
+        uses: actions/setup-python@v5
+        name: Install Python
+      - if: ${{ matrix.os != 'windows-11-arm' }}
+        uses: actions/setup-python@v2 # Some issues where caused by higher versions.
         name: Install Python
       - name: Install cibuildwheel twine build
         run: python -m pip install cibuildwheel twine build
@@ -190,6 +199,8 @@ jobs:
       - name: Set MSVC developer prompt
         uses: ilammy/msvc-dev-cmd@v1
         if: runner.os == 'Windows'
+        with:
+          arch: ${{ matrix.os == 'windows-11-arm' && 'arm64' || 'x64' }}
       - name: Set up QEMU
         if: ${{runner.os == 'Linux' && matrix.cibw_archs_linux == 'aarch64'}}
         uses: docker/setup-qemu-action@v3
@@ -199,7 +210,7 @@ jobs:
         run: cibuildwheel --output-dir dist
         env:
           # Skip 32 bit, macosx_arm64 causes issues on cpython 3.9
-          CIBW_SKIP: "*-win32 *-manylinux_i686 cp38-macosx_arm64"
+          CIBW_SKIP: "*-win32 *-manylinux_i686 cp38-macosx_arm64 cp39-win_arm64 cp310-win_arm64"
           CIBW_ARCHS_LINUX: ${{ matrix.cibw_archs_linux }}
           CIBW_TEST_REQUIRES: "pytest"
           # Simple tests that requires the project to be build correctly
