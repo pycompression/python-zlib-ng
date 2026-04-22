@@ -9,6 +9,7 @@ Changelog
 
 version 1.0.1-dev
 -----------------
++ Updated bundled zlib-ng to 2.3.3.
 + Wheels are now built for Windows arm64 architectures.
 
 version 1.0.0
