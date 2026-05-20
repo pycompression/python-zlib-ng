@@ -10,6 +10,7 @@ Changelog
 version 1.0.1-dev
 -----------------
 + Wheels are now built for Windows arm64 architectures.
++ Restore PyPy wheel builds.
 
 version 1.0.0
 -----------------
