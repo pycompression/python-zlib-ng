@@ -67,7 +67,7 @@ jobs:
         include:
           - os: "macos-latest"  # For m1 macos
             python-version: "3.12"
-          - os: "macos-13"  # for x86 macos
+          - os: "macos-15-intel"  # for x86 macos
             python-version: "3.10"
           - os: "windows-latest"
             python-version: "3.10"
@@ -135,7 +135,7 @@ jobs:
       matrix:
         os:
           - "ubuntu-latest"
-          - "macos-13"
+          - "macos-15-intel"
           - "macos-latest"
           - "windows-latest"
         python_version: [ "python" ]
@@ -173,7 +173,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-13
+          - macos-15-intel
           - macos-latest
           - windows-latest
           - windows-11-arm
