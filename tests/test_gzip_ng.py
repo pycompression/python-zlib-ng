@@ -65,7 +65,7 @@ def test_GzipNGFile_read_truncated():
                 "reached")
 
 
-@pytest.mark.parametrize("level", range(1, 10))
+@pytest.mark.parametrize("level", list(range(1, 10)))
 def test_decompress_stdin_stdout(capsysbinary, level):
     """Test if the command line can decompress data that has been compressed
     by gzip at all levels."""

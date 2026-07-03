@@ -801,7 +801,8 @@ zlib_Compress_copy(compobject *self, PyObject *Py_UNUSED(ignored))
 
     if (!self->is_initialised) {
         PyErr_SetString(PyExc_ValueError, "Cannot copy flushed objects.");
-        goto error;
+        Py_DECREF(return_value);
+        return NULL;
     }
 
     /* Copy the zstream state
