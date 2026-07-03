@@ -9,6 +9,7 @@ Changelog
 
 version 1.0.1-dev
 -----------------
++ Updated bundled zlib-ng to 2.3.3.
 + Wheels are now built for Windows arm64 architectures.
 + Fix a crash when calling ``copy()`` on a flushed compress object on Python
   3.15. Python 3.15 changed
