@@ -99,6 +99,24 @@ def test_threaded_write_oversized_block_no_error(threads):
 
 
 @pytest.mark.timeout(5)
+@pytest.mark.parametrize(["threads", "block_size"],
+                         list(itertools.product([1, 3],
+                                                [8 * 1024, 1024 * 1024])))
+def test_threaded_write_high_bytes_level_1(tmp_path, threads, block_size):
+    # Level 1 codes all data with the fixed Huffman codes and never falls back
+    # to stored blocks. Bytes 144 to 255 take 9 bits in these codes, so data
+    # made of them grows by 12.5%. Map random bytes onto 144 to 255.
+    data = os.urandom(3 * block_size).translate(
+        bytes(144 + i % 112 for i in range(256)))
+    test_file = tmp_path / "output.gz"
+    with gzip_ng_threaded.open(test_file, "wb", compresslevel=1,
+                               threads=threads, block_size=block_size) as f:
+        f.write(data)
+    with gzip.open(test_file, "rb") as f:
+        assert f.read() == data
+
+
+@pytest.mark.timeout(5)
 @pytest.mark.parametrize("threads", [1, 3])
 def test_threaded_write_error(threads):
     f = gzip_ng_threaded._ThreadedGzipWriter(
