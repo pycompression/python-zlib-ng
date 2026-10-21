@@ -10,6 +10,7 @@ Changelog
 version 1.0.1-dev
 -----------------
 + Wheels are now built for Windows arm64 architectures.
++ Restore PyPy wheel builds.
 + Fix a crash when calling ``copy()`` on a flushed compress object on Python
   3.15. Python 3.15 changed
   (`gh-134745 <https://github.com/python/cpython/issues/134745/>`__)
