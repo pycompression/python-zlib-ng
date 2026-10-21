@@ -226,18 +226,9 @@ class _ThreadedGzipWriter(io.RawIOBase):
         self.exception: Optional[Exception] = None
         self.level = level
         self.previous_block = b""
-        # Deflating random data results in an output a little larger than the
-        # input. Making the output buffer 10% larger is sufficient overkill.
-        # Level 1 is the exception: it codes all data with the fixed Huffman
-        # codes and never falls back to stored blocks. Bytes 144 to 255 take 9
-        # bits in these codes, so data made of them grows by 12.5%. No byte
-        # takes more than 9 bits, so the block size plus an eighth plus 500
-        # bytes for the block header, the end-of-block code, and the sync
-        # flush marker always fits.
-        if level == 1:
-            compress_buffer_size = block_size + block_size // 8 + 500
-        else:
-            compress_buffer_size = block_size + max(block_size // 10, 500)
+        # Level 1 never falls back to stored blocks and codes bytes 144 to 255
+        # with 9 bits each, so its output can be an eighth larger.
+        compress_buffer_size = block_size + block_size // 8 + 500
         self.block_size = block_size
         self.compressors: List[zlib_ng._ParallelCompress] = [
             zlib_ng._ParallelCompress(buffersize=compress_buffer_size,
