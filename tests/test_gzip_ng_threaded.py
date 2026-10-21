@@ -31,7 +31,7 @@ def test_threaded_read():
 
 
 @pytest.mark.parametrize(["mode", "threads"],
-                         itertools.product(["wb", "wt"], [1, 3, -1]))
+                         list(itertools.product(["wb", "wt"], [1, 3, -1])))
 def test_threaded_write(mode, threads):
     with tempfile.NamedTemporaryFile("wb", delete=False) as tmp:
         # Use a small block size to simulate many writes.
@@ -216,7 +216,7 @@ def test_threaded_writer_does_not_close_stream():
 
 @pytest.mark.timeout(5)
 @pytest.mark.parametrize(
-    ["mode", "threads"], itertools.product(["rb", "wb"], [1, 2]))
+    ["mode", "threads"], list(itertools.product(["rb", "wb"], [1, 2])))
 def test_threaded_program_can_exit_on_error(tmp_path, mode, threads):
     program = tmp_path / "no_context_manager.py"
     test_file = tmp_path / "output.gz"

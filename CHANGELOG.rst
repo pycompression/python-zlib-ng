@@ -11,6 +11,11 @@ version 1.0.1-dev
 -----------------
 + Wheels are now built for Windows arm64 architectures.
 + Restore PyPy wheel builds.
++ Fix a crash when calling ``copy()`` on a flushed compress object on Python
+  3.15. Python 3.15 changed
+  (`gh-134745 <https://github.com/python/cpython/issues/134745/>`__)
+  ``PyThread_release_lock`` to use ``PyMutex`` internally, which now raises a
+  fatal error when releasing a lock that was never acquired.
 
 version 1.0.0
 -----------------
