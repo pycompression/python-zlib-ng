@@ -9,6 +9,11 @@ Changelog
 
 version 1.0.1-dev
 -----------------
++ Fix ``gzip_ng_threaded`` writers that waited forever when writing to the
+  underlying file failed, for example, because the disk was full. A later call
+  to ``write()``, ``flush()``, or ``close()`` raises the error. After an error,
+  ``close()`` no longer closes a file object that you passed to
+  ``gzip_ng_threaded.open``.
 + Wheels are now built for Windows arm64 architectures.
 + Restore PyPy wheel builds.
 + Fix a crash when calling ``copy()`` on a flushed compress object on Python
