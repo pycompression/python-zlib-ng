@@ -16,6 +16,9 @@ version 1.0.1-dev
   (`gh-134745 <https://github.com/python/cpython/issues/134745/>`__)
   ``PyThread_release_lock`` to use ``PyMutex`` internally, which now raises a
   fatal error when releasing a lock that was never acquired.
++ Fix ``gzip_ng_threaded`` writers at compression level 1, which raised
+  ``OverflowError`` for data that does not compress and consists mostly of
+  bytes 144 to 255.
 
 version 1.0.0
 -----------------
