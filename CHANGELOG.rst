@@ -9,6 +9,8 @@ Changelog
 
 version 1.0.1-dev
 -----------------
++ Python 3.10 and PyPy 3.10 are no longer supported. Added support for PyPy
+  3.12 and Python 3.15.
 + Update included zlib-ng distribution to 2.3.3.
 + Fix BrokenPipeError when piping ``python -m isal.igzip`` into ``head``,
   ``less`` or similar programs.
