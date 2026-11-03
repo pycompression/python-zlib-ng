@@ -24,6 +24,10 @@ version 1.0.1-dev
 + Fix ``gzip_ng_threaded`` writers at compression level 1, which raised
   ``OverflowError`` for data that does not compress and consists mostly of
   bytes 144 to 255.
++ Extraordinarily large gzip headers with either a very long comment or
+  filename will now cause an ``OverflowError`` rather than use more and more
+  memory. The size is limited to the internal buffer size which is currently
+  set at 512 KiB.
 
 version 1.0.0
 -----------------
