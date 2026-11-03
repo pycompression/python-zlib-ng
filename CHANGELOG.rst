@@ -10,6 +10,8 @@ Changelog
 version 1.0.1-dev
 -----------------
 + Update included zlib-ng distribution to 2.3.3.
++ Fix BrokenPipeError when piping ``python -m isal.igzip`` into ``head``,
+  ``less`` or similar programs.
 + Fix ``gzip_ng_threaded`` writers that waited forever when writing to the
   underlying file failed, for example, because the disk was full. A later call
   to ``write()``, ``flush()``, or ``close()`` raises the error. After an error,

@@ -304,6 +304,9 @@ def main():
     READ_BUFFER_SIZE = args.buffer_size
     try:
         shutil.copyfileobj(in_file, out_file, args.buffer_size)
+    except BrokenPipeError:
+        # Do not throw errors when a pipe to head or less closes.
+        pass
     finally:
         if in_file is not sys.stdin.buffer:
             in_file.close()

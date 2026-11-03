@@ -15,6 +15,7 @@ import os
 import re
 import shutil
 import struct
+import subprocess
 import sys
 import tempfile
 import zlib
@@ -496,3 +497,14 @@ def test_adverserial_header():
                 gzip_file.read()
     finally:
         os.remove(tmpfile.name)
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="bash required")
+def test_no_broken_pipe():
+    subprocess.run(
+        [
+            "bash", "-c", "-e", "-o", "pipefail",
+            f"{sys.executable} -m zlib_ng.gzip_ng -cd {TEST_FILE} | head -n 10"
+        ],
+        check=True
+    )
