@@ -103,20 +103,12 @@ def build_zlib_ng():
     build_env["CFLAGS"] = build_env.get("CFLAGS", "") + " -fPIC"
     # Add -fPIC flag to allow static compilation
     run_args = dict(cwd=build_dir, env=build_env)
-    if sys.platform == "darwin":  # Cmake does not work properly
-        subprocess.run([os.path.join(build_dir, "configure")], **run_args)
-        make_program = "gmake" if shutil.which("gmake") else "make"
-        subprocess.run([make_program, "libz-ng.a"], **run_args)
-    elif sys.platform == "linux":
-        subprocess.run([os.path.join(build_dir, "configure")], **run_args)
-        subprocess.run(["make", "libz-ng.a", "-j", str(cpu_count)], **run_args)
-    else:
-        subprocess.run(["cmake", build_dir], **run_args)
-        # Do not create test suite and do not perform tests to shorten build times.
-        # There is no need when stable releases of zlib-ng are used.
-        subprocess.run(["cmake", "--build", build_dir, "--config", "Release",
-                        "--target", "zlibstatic",
-                        "-j", str(cpu_count)], **run_args)
+    subprocess.run(["cmake", build_dir], **run_args)
+    # Do not create test suite and do not perform tests to shorten build times.
+    # There is no need when stable releases of zlib-ng are used.
+    subprocess.run(["cmake", "--build", build_dir, "--config", "Release",
+                    "--target", "zlib-ng-static",
+                    "-j", str(cpu_count)], **run_args)
     if BUILD_CACHE:
         BUILD_CACHE_FILE.write_text(build_dir)
     return build_dir

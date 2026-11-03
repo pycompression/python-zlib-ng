@@ -89,7 +89,7 @@ jobs:
         with:
           arch: ${{ matrix.os == 'windows-11-arm' && 'arm64' || 'x64' }}
       - name: Install build dependencies (MacOS)
-        run: brew install make
+        run: brew install cmake
         if: runner.os == 'macOS'
       - name: Run tests
         run: tox
