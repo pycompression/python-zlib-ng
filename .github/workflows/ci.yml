@@ -61,7 +61,7 @@ jobs:
           - "3.15"
           - "3.15t"
           - "pypy-3.11"
-          - "pypy-3.11"
+          - "pypy-3.12"
         os: ["ubuntu-latest"]
         include:
           - os: "macos-latest"  # For m1 macos
@@ -302,10 +302,6 @@ jobs:
             PYTHON_ZLIB_NG_BUILD_CACHE=True
             PYTHON_ZLIB_NG_BUILD_CACHE_FILE=${{ runner.temp }}/build_cache
             CFLAGS="-O3 -DNDEBUG"
-      - name: Build sdist
-        if: ${{runner.os == 'Linux' && matrix.cibw_archs_linux == 'x86_64'}}
-        run:
-            python -m build --sdist
       - uses: actions/upload-artifact@v7
         with:
           name: "cibw-${{ runner.os }}-${{ runner.arch }}-${{ matrix.cibw_archs_linux }}"
