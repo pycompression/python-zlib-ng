@@ -1183,8 +1183,10 @@ decompress_buf(ZlibDecompressor *self, Py_ssize_t max_length)
 
     self->avail_in_real += self->zst.avail_in;
 
-    if (_PyBytes_Resize(&return_value, self->zst.next_out -
-                        (uint8_t *)PyBytes_AS_STRING(return_value)) != 0) {
+    /* Prevent empty string object from being resized. */
+    if (PyBytes_GET_SIZE(return_value) != 0 &&
+        _PyBytes_Resize(&return_value, self->zst.next_out -
+            (uint8_t *)PyBytes_AS_STRING(return_value)) != 0) {
         goto error;
     }
 
