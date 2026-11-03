@@ -5,6 +5,7 @@
 # This file is part of python-isal which is distributed under the
 # PYTHON SOFTWARE FOUNDATION LICENSE VERSION 2.
 
+import errno
 import gzip
 import io
 import itertools
@@ -12,6 +13,8 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
+import types
 import zlib
 from pathlib import Path
 
@@ -31,7 +34,7 @@ def test_threaded_read():
 
 
 @pytest.mark.parametrize(["mode", "threads"],
-                         itertools.product(["wb", "wt"], [1, 3, -1]))
+                         list(itertools.product(["wb", "wt"], [1, 3, -1])))
 def test_threaded_write(mode, threads):
     with tempfile.NamedTemporaryFile("wb", delete=False) as tmp:
         # Use a small block size to simulate many writes.
@@ -99,6 +102,24 @@ def test_threaded_write_oversized_block_no_error(threads):
 
 
 @pytest.mark.timeout(5)
+@pytest.mark.parametrize(["threads", "block_size"],
+                         list(itertools.product([1, 3],
+                                                [8 * 1024, 1024 * 1024])))
+def test_threaded_write_high_bytes_level_1(tmp_path, threads, block_size):
+    # Level 1 codes all data with the fixed Huffman codes and never falls back
+    # to stored blocks. Bytes 144 to 255 take 9 bits in these codes, so data
+    # made of them grows by 12.5%. Map random bytes onto 144 to 255.
+    data = os.urandom(3 * block_size).translate(
+        bytes(144 + i % 112 for i in range(256)))
+    test_file = tmp_path / "output.gz"
+    with gzip_ng_threaded.open(test_file, "wb", compresslevel=1,
+                               threads=threads, block_size=block_size) as f:
+        f.write(data)
+    with gzip.open(test_file, "rb") as f:
+        assert f.read() == data
+
+
+@pytest.mark.timeout(5)
 @pytest.mark.parametrize("threads", [1, 3])
 def test_threaded_write_error(threads):
     f = gzip_ng_threaded._ThreadedGzipWriter(
@@ -110,6 +131,83 @@ def test_threaded_write_error(threads):
     with pytest.raises(OverflowError) as error:
         f.close()
     error.match("Compressed output exceeds buffer size")
+
+
+class FullDiskStream(io.BytesIO):
+    """Accepts the 10-byte gzip header, then fails like a full disk."""
+    before_error = None
+
+    def write(self, b):
+        if self.tell() == 0:
+            return super().write(b)
+        if self.before_error:
+            self.before_error()
+        raise OSError(errno.ENOSPC, os.strerror(errno.ENOSPC))
+
+
+def assert_writer_closed(f):
+    assert f.closed
+    workers = [f.output_worker] + f.compression_workers
+    assert not any(worker.is_alive() for worker in workers)
+    # Make sure double closing does not raise errors
+    f.close()
+
+
+@pytest.mark.timeout(5)
+@pytest.mark.parametrize("threads", [1, 3])
+def test_threaded_write_error_with_full_queues(threads):
+    raw = FullDiskStream()
+    f = gzip_ng_threaded._ThreadedGzipWriter(raw, threads=threads)
+    queues = f.input_queues + f.output_queues
+
+    def wait_until_queues_are_full():
+        while not all(q.full() for q in queues):
+            time.sleep(0.001)
+
+    # Fail when all queues are full, so write() usually waits for room in a
+    # full input queue.
+    raw.before_error = wait_until_queues_are_full
+    with pytest.raises(OSError) as error:
+        while True:
+            f.write(b"x")
+    assert error.value.errno == errno.ENOSPC
+    with pytest.raises(OSError):
+        f.close()
+    assert_writer_closed(f)
+
+
+@pytest.mark.timeout(5)
+@pytest.mark.parametrize("threads", [1, 3])
+def test_threaded_flush_error(threads):
+    raw = FullDiskStream()
+    f = gzip_ng_threaded.open(raw, "wb", threads=threads)
+    f.write(b"x")
+    with pytest.raises(OSError) as error:
+        f.flush()
+    assert error.value.errno == errno.ENOSPC
+    # Later calls raise the error again.
+    with pytest.raises(OSError):
+        f.flush()
+    with pytest.raises(OSError):
+        f.close()
+    assert_writer_closed(f.raw)
+    # The test passed the stream to open(), so close() leaves it open.
+    assert not raw.closed
+
+
+@pytest.mark.timeout(5)
+@pytest.mark.parametrize("threads", [1, 3])
+def test_threaded_close_error(monkeypatch, threads):
+    raw = FullDiskStream()
+    # Make open() treat raw as a file that it opened by name.
+    monkeypatch.setattr(gzip_ng_threaded, "builtins",
+                        types.SimpleNamespace(open=lambda name, mode: raw))
+    with pytest.raises(OSError) as error:
+        with gzip_ng_threaded.open("full.gz", "wb", threads=threads) as f:
+            f.write(b"x")
+    assert error.value.errno == errno.ENOSPC
+    assert_writer_closed(f.raw)
+    assert raw.closed
 
 
 def test_close_reader():
@@ -129,6 +227,18 @@ def test_close_writer(threads):
     assert f.closed
     # Make sure double closing does not raise errors
     f.close()
+
+
+@pytest.mark.parametrize("threads", [1, 3])
+def test_close_writer_writes_queued_blocks(threads):
+    raw = io.BytesIO()
+    f = gzip_ng_threaded._ThreadedGzipWriter(
+        raw, threads=threads, block_size=8 * 1024)
+    data = os.urandom(64 * 1024)
+    f.write(data)
+    # close() must write the queued blocks before the gzip trailer.
+    f.close()
+    assert gzip.decompress(raw.getvalue()) == data
 
 
 def test_reader_not_writable():
@@ -216,7 +326,7 @@ def test_threaded_writer_does_not_close_stream():
 
 @pytest.mark.timeout(5)
 @pytest.mark.parametrize(
-    ["mode", "threads"], itertools.product(["rb", "wb"], [1, 2]))
+    ["mode", "threads"], list(itertools.product(["rb", "wb"], [1, 2])))
 def test_threaded_program_can_exit_on_error(tmp_path, mode, threads):
     program = tmp_path / "no_context_manager.py"
     test_file = tmp_path / "output.gz"

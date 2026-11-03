@@ -14,6 +14,8 @@ import io
 import os
 import re
 import shutil
+import struct
+import subprocess
 import sys
 import tempfile
 import zlib
@@ -65,7 +67,7 @@ def test_GzipNGFile_read_truncated():
                 "reached")
 
 
-@pytest.mark.parametrize("level", range(1, 10))
+@pytest.mark.parametrize("level", list(range(1, 10)))
 def test_decompress_stdin_stdout(capsysbinary, level):
     """Test if the command line can decompress data that has been compressed
     by gzip at all levels."""
@@ -409,7 +411,7 @@ def test_very_long_header_in_data():
 def test_very_long_header_in_file():
     # header with a very long filename.
     header = (b"\x1f\x8b\x08\x08\x00\x00\x00\x00\x00\xff" +
-              gzip_ng.READ_BUFFER_SIZE * 2 * b"A" +
+              (gzip_ng.READ_BUFFER_SIZE - 11) * b"A" +
               b"\x00")
     compressed = header + zlib_ng.compress(b"", 3, -15) + 8 * b"\00"
     f = io.BytesIO(compressed)
@@ -471,3 +473,38 @@ def test_bgzip():
     with gzip_ng.open(gzip_file, "rb") as gz:
         gz_data = gz.read()
     assert bgz_data == gz_data
+
+
+def test_adverserial_header():
+    magic = b"\x1f\x8b"
+    method = 8
+    mtime = 0
+    flags = FCOMMENT
+    _os = 255
+    xfl = 0
+    header = struct.pack("<2sBBIBB", magic, method, flags, mtime, xfl, _os)
+    comment = b"A" * 10 * 1024 * 1024 + b"\00"
+    compressed = zlib_ng.compress(b"", wbits=-15)
+    crc = zlib_ng.crc32(b"")
+    length = 0
+    trailer = struct.pack("<II", crc, length)
+    adverserial = header + comment + compressed + trailer
+    with tempfile.NamedTemporaryFile("wb", delete=False) as tmpfile:
+        tmpfile.write(adverserial)
+    try:
+        with pytest.raises(OverflowError):
+            with gzip_ng.open(tmpfile.name, "rb") as gzip_file:
+                gzip_file.read()
+    finally:
+        os.remove(tmpfile.name)
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="bash required")
+def test_no_broken_pipe():
+    subprocess.run(
+        [
+            "bash", "-c", "-e", "-o", "pipefail",
+            f"{sys.executable} -m zlib_ng.gzip_ng -cd {TEST_FILE} | head -n 10"
+        ],
+        check=True
+    )

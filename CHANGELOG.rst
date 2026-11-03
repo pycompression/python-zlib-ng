@@ -7,6 +7,31 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
+version 1.1.0
+-----------------
++ Update included zlib-ng distribution to 2.3.3.
++ Fix BrokenPipeError when piping ``python -m isal.igzip`` into ``head``,
+  ``less`` or similar programs.
++ Fix ``gzip_ng_threaded`` writers that waited forever when writing to the
+  underlying file failed, for example, because the disk was full. A later call
+  to ``write()``, ``flush()``, or ``close()`` raises the error. After an error,
+  ``close()`` no longer closes a file object that you passed to
+  ``gzip_ng_threaded.open``.
++ Wheels are now built for Windows arm64 architectures.
++ Restore PyPy wheel builds.
++ Fix a crash when calling ``copy()`` on a flushed compress object on Python
+  3.15. Python 3.15 changed
+  (`gh-134745 <https://github.com/python/cpython/issues/134745/>`__)
+  ``PyThread_release_lock`` to use ``PyMutex`` internally, which now raises a
+  fatal error when releasing a lock that was never acquired.
++ Fix ``gzip_ng_threaded`` writers at compression level 1, which raised
+  ``OverflowError`` for data that does not compress and consists mostly of
+  bytes 144 to 255.
++ Extraordinarily large gzip headers with either a very long comment or
+  filename will now cause an ``OverflowError`` rather than use more and more
+  memory. The size is limited to the internal buffer size which is currently
+  set at 512 KiB.
+
 version 1.0.0
 -----------------
 The library has been running without issues as a dependency in quite a few
