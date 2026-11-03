@@ -178,7 +178,7 @@ jobs:
         with:
           submodules: recursive
       - name: Install build dependencies
-        run: apt-get update && apt-get install -y nasm
+        run: apt-get update && apt-get install -y cmake
       - name: Install python-isal with ${{ matrix.sanitizer }} sanitizer
         # setuptools-scm needs git, and the container user does not own the
         # repository.
