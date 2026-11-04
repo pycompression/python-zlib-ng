@@ -12,7 +12,7 @@ version 1.1.0
 + Python 3.10 and PyPy 3.10 are no longer supported. Added support for PyPy
   3.12 and Python 3.15.
 + Update included zlib-ng distribution to 2.3.3.
-+ Fix BrokenPipeError when piping ``python -m isal.igzip`` into ``head``,
++ Fix BrokenPipeError when piping ``python -m zlib_ng.gzip_ng`` into ``head``,
   ``less`` or similar programs.
 + Fix ``gzip_ng_threaded`` writers that waited forever when writing to the
   underlying file failed, for example, because the disk was full. A later call
