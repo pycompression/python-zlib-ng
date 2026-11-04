@@ -38,7 +38,8 @@ Installation with pip
     pip install zlib-ng
 
 Installation is supported on Linux, MacOS and Windows. On most platforms
-wheels are provided.
+wheels are provided. Regular CPython 3.11 and newer share a stable ABI wheel
+for each platform. Free-threaded CPython and PyPy use separate wheels.
 The installation will include a staticallly linked version of zlib-ng.
 If a wheel is not provided for your system the
 installation will build zlib-ng first in a temporary directory. Please check the

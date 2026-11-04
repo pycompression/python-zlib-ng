@@ -1,0 +1,13 @@
+route,variant,cases,median_time_ratio,min_case_median,max_case_median
+decompress,buffers-eof,8,1.129581,0.914047,1.651139
+decompress,segmented-eof,8,0.971255,0.392543,1.467111
+decompress,bytesio-eof,8,1.333060,1.148433,1.682881
+decompress,bytesio-hybrid-eof,8,1.322568,1.150789,1.697125
+private-decompress,buffers-eof,8,1.197271,0.910001,1.910662
+private-decompress,segmented-eof,8,0.980153,0.392010,1.651245
+private-decompress,bytesio-eof,8,1.463061,1.136457,1.873178
+private-decompress,bytesio-hybrid-eof,8,1.524346,1.139390,1.921091
+stream-decompress,buffers-eof,8,1.180522,0.888484,1.585731
+stream-decompress,segmented-eof,8,1.036446,0.399769,1.542543
+stream-decompress,bytesio-eof,8,1.395577,1.049052,1.879725
+stream-decompress,bytesio-hybrid-eof,8,1.379089,1.149263,1.813529

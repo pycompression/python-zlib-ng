@@ -7,6 +7,13 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
+Unreleased
+-----------------
++ Regular CPython 3.11 and newer share stable ABI wheels. PyPy and
+  free-threaded CPython keep their interpreter-specific wheels.
++ Avoid an extra output allocation when compression or decompression finishes
+  exactly at the end of its buffer.
+
 version 1.1.0
 -----------------
 + Python 3.10 and PyPy 3.10 are no longer supported. Added support for PyPy
