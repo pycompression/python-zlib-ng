@@ -246,7 +246,7 @@ jobs:
           submodules: recursive
       - name: Install build dependencies
         run: apt-get update && apt-get install -y cmake
-      - name: Install python-isal with ${{ matrix.sanitizer }} sanitizer
+      - name: Install python-zlib-ng with ${{ matrix.sanitizer }} sanitizer
         # setuptools-scm needs git, and the container user does not own the
         # repository.
         run: |
@@ -254,7 +254,7 @@ jobs:
           python -m pip install . pytest pytest-timeout
         env:
           # The extension modules get -fsanitize from CPython. CFLAGS adds it
-          # to the C code of ISA-L.
+          # to the C code of zlib-ng.
           CFLAGS: -fsanitize=${{ matrix.sanitizer }} -fno-omit-frame-pointer -g
       - name: Run tests
         # Do not set PYTHONDEVMODE. Its debug allocator pads each allocation,
