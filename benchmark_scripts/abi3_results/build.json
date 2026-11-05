@@ -1,6 +1,6 @@
 {
   "baseline_commit": "39cec01898a4a44ac988a40e98fd8d8cbbcaacd9",
-  "candidate_c_source_sha256": "819a4d73ff51dc5aac723044428ae893edccbaec3748d2a9bd3dde38bf37bf84",
+  "candidate_c_source_sha256": "cb8fd4d7a3f6a903dcbe0f614b4269102c9b8bb607b538b4953372bf13aee305",
   "native_commit": "12731092979c6d07f42da27da673a9f6c7b13586",
   "native_version": "zlib-ng 2.3.3",
   "native_archive_sha256": "4607e64aa8eede07bc8de9ae0775f76d6d35dc799231cf7b4f11eb64884f1819",
@@ -10,7 +10,7 @@
     "-DCMAKE_BUILD_TYPE=Release",
     "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
   ],
-  "wrapper_build": "CPython 3.11.15, setuptools 84.2.1, setuptools-scm 10.3.4, wheel 0.48.0, build 1.6.1; default interpreter compiler flags, GCC 15.2.0. Both use the identical cached static archive.",
+  "wrapper_build": "CPython 3.11.15, setuptools 84.2.1, setuptools-scm 10.3.4, wheel 0.48.0, build 1.6.1; default interpreter compiler flags, GCC 15.2.0. Both use the identical cached static archive. Rebuilding the earlier candidate (6488941) this way reproduced its measured extension .text and .rodata exactly; only the embedded build path differs.",
   "runtime": "3.11.15 (main, Mar 24 2026, 22:50:29) [Clang 22.1.1 ]",
   "platform": "Linux-7.0.0-42-generic-x86_64-with-glibc2.43",
   "cpu": "Intel Core i7-3770, 4cores/8threads; no AVX2",
@@ -18,8 +18,8 @@
   "rounds": 9,
   "case_count": 128,
   "sample_target_ms": 20,
-  "control_p95_absolute_delta": 0.028844180273887722,
-  "control_max_absolute_delta": 0.05314165066166732,
+  "control_p95_absolute_delta": 0.047808642851965816,
+  "control_max_absolute_delta": 0.09892143410936849,
   "wheel_version_note": "Both development wheels use SETUPTOOLS_SCM_PRETEND_VERSION=1.1.1.dev0 because isolated source copies have no .git metadata.",
   "wheels": {
     "baseline": {
@@ -29,8 +29,8 @@
     },
     "candidate": {
       "filename": "zlib_ng-1.1.1.dev0-cp311-abi3-linux_x86_64.whl",
-      "sha256": "c0cb4b752627df4d05bba98af445e514157cdb0f9722c0cb5d60dde02fea11d4",
-      "extension_sha256": "cd5f392aa506195468bf85cdf26d57b254eef273a06a575bbe8ac10b462928ef"
+      "sha256": "2b2915356da4731c0fa1152c57696d796556f44092c64db811a5af7c4b7e49e8",
+      "extension_sha256": "b1bcf1d66fe0425e1ad8ab43e59707f60d85d00fe69ca916483872547cbd4dc7"
     },
     "free-threaded": {
       "filename": "zlib_ng-1.1.1.dev0-cp313-cp313t-linux_x86_64.whl",
@@ -50,8 +50,8 @@
     "same_abi3_wheel_installed_versions": "CPython3.11,3.12,3.13,3.14,3.15;stable_abi.py passes in each;fullsuite on3.14",
     "abi3audit": "strict audit of actual cp311-abi3 wheel passed",
     "lint": "flake8 changedPythonfiles; mypy src/tests/benchmark_scripts; gitdiff--check pass",
-    "free_threaded3.13_final_wheel_full_suite": "14450passed,1skipped;only two stdlib-compliance files unavailable in this interpreter",
-    "reference_replacement": "Assignment-before-DECREF ordering matches original Py_SETREF/Py_XSETREF semantics"
+    "reference_replacement": "Assignment-before-DECREF ordering matches original Py_SETREF/Py_XSETREF semantics",
+    "status": "Pending re-verification of this candidate; see the report."
   },
   "limits": [
     "Linuxx86_64timings only;macOS/Windows portability checked by addedCI jobs, not run locally",
@@ -59,5 +59,17 @@
     "Native callbacks use libc allocation; native memory may be absent from tracemalloc",
     "Prototype mitigation dataset differs from final stdlib-source corpus; do not compare ratios across studies"
   ],
-  "harness_sha256": "368a37b37a4a19ca85a4bf8e1b747cdce2dc6d07d8a34fcf0734af13297dacd2"
+  "harness_sha256": "84e289a2d1c29275fedf74c7d637005ac2e0e2cb3ca75d82dbc9a5d6a3bc982f",
+  "benchmark": {
+    "results.json": {
+      "started": "2026-11-05T08:47:21+02:00",
+      "finished": "2026-11-05T08:49:39+02:00"
+    },
+    "repair-check.json": {
+      "description": "Earlier candidate (6488941 wheel c0cb4b75...) as baseline/control against this candidate, same protocol.",
+      "control_p95_inclusive": 0.04009275869500182,
+      "control_max": 0.16555229719307185
+    },
+    "machine_note": "Desktop processes (remote-desktop service, browser) were running; no build, test or other benchmark ran."
+  }
 }
