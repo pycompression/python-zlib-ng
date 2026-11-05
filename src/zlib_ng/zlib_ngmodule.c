@@ -1287,7 +1287,10 @@ decompress_buf(ZlibDecompressor *self, Py_ssize_t max_length)
                 goto error;
             }
             else if (obuflen == -2) {
-                break;
+                /* The output limit is reached. Leave both loops: another
+                   input chunk would overwrite zst.avail_in, which still
+                   counts unconsumed bytes of this chunk. */
+                goto input_left;
             }
             Py_BEGIN_ALLOW_THREADS
             err = zng_inflate(&self->zst, Z_SYNC_FLUSH);
@@ -1301,13 +1304,13 @@ decompress_buf(ZlibDecompressor *self, Py_ssize_t max_length)
                 if (err == Z_NEED_DICT) {
                     goto error;
                 }
-                else {
-                    break;
-                }
+                /* Report the error below without feeding more input. */
+                goto input_left;
             }
         } while (self->zst.avail_out == 0 && err != Z_STREAM_END);
     } while(err != Z_STREAM_END && self->avail_in_real != 0);
 
+input_left:
     if (err == Z_STREAM_END) {
         self->eof = 1;
         self->is_initialised = 0;
