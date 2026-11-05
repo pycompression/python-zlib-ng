@@ -731,14 +731,17 @@ zlib_Compress_compress_impl(compobject *self, Py_buffer *data)
 static int
 save_unconsumed_input(compobject *self, Py_buffer *data, int err)
 {
+    /* zst.avail_in only covers the current chunk of at most UINT32_MAX
+       bytes; larger input can have more after it. */
+    Py_ssize_t left_size = (uint8_t *)data->buf + data->len - self->zst.next_in;
+    int saved_unused = 0;
     if (err == Z_STREAM_END) {
         /* The end of the compressed data has been reached. Store the leftover
            input data in self->unused_data. */
-        if (self->zst.avail_in > 0) {
+        if (left_size > 0) {
             Py_ssize_t old_size = PyBytes_Size(self->unused_data);
-            Py_ssize_t new_size, left_size;
+            Py_ssize_t new_size;
             PyObject *new_data;
-            left_size = (uint8_t *)data->buf + data->len - self->zst.next_in;
             if (left_size > (PY_SSIZE_T_MAX - old_size)) {
                 PyErr_NoMemory();
                 return -1;
@@ -753,14 +756,15 @@ save_unconsumed_input(compobject *self, Py_buffer *data, int err)
                       self->zst.next_in, left_size);
             replace_reference(&self->unused_data, new_data);
             self->zst.avail_in = 0;
+            saved_unused = 1;
         }
     }
 
-    if (self->zst.avail_in > 0 || PyBytes_Size(self->unconsumed_tail)) {
+    if ((left_size > 0 && !saved_unused) ||
+            PyBytes_Size(self->unconsumed_tail)) {
         /* This code handles two distinct cases:
            1. Output limit was reached. Save leftover input in unconsumed_tail.
            2. All input data was consumed. Clear unconsumed_tail. */
-        Py_ssize_t left_size = (uint8_t *)data->buf + data->len - self->zst.next_in;
         PyObject *new_data = PyBytes_FromStringAndSize(
                 (char *)self->zst.next_in, left_size);
         if (new_data == NULL)
