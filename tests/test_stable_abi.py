@@ -238,33 +238,41 @@ def test_gzip_reader_propagates_read_lookup_errors():
                     reason="Needs _testcapi.set_nomemory")
 def test_module_initialization_failure_reports_its_error():
     pytest.importorskip("_testcapi")
+    # _imp.create_dynamic() runs the module initialization again without the
+    # import system's module locks, which CPython 3.13 cannot allocate safely
+    # under set_nomemory.
     code = """
-import importlib
-import sys
+import _imp
+import importlib.util
 import _testcapi
 import zlib_ng.zlib_ng
-failures = successes = 0
-start = 0
-# A module with state is initialized again on every import.
-while successes < 50:
-    sys.modules.pop("zlib_ng.zlib_ng", None)
+spec = importlib.util.find_spec("zlib_ng.zlib_ng")
+def initialize(start):
     _testcapi.set_nomemory(start, start + 1)
     try:
-        importlib.import_module("zlib_ng.zlib_ng")
-    except MemoryError:
-        failures += 1
-        successes = 0
-    except SystemError as error:
-        # Some CPython versions fail type creation without an exception.
-        # Initialization must never leave an unreported exception behind.
-        assert "without raising" in str(error), (start, error)
-    else:
-        successes += 1
+        _imp.create_dynamic(spec)
+    except Exception as error:
+        return error
     finally:
         _testcapi.remove_mem_hooks()
+    return None
+failures = successes = start = 0
+while successes < 50:
+    error = initialize(start)
+    if error is None:
+        successes += 1
+    else:
+        successes = 0
+        failures += 1
+        if isinstance(error, SystemError):
+            # CPython 3.14 can fail heap-type creation without an exception.
+            # Initialization must never leave an unreported exception.
+            assert "without raising" in str(error), (start, error)
+        else:
+            assert isinstance(error, MemoryError), (start, error)
     start += 1
 assert failures
-module = importlib.import_module("zlib_ng.zlib_ng")
+module = _imp.create_dynamic(spec)
 assert module.decompress(module.compress(b"test")) == b"test"
 """
     result = subprocess.run([sys.executable, "-c", code],
