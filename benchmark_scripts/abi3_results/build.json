@@ -44,18 +44,18 @@
     }
   },
   "validation": {
-    "same_abi3_wheel": "Built with Py_LIMITED_API=0x030B0000; abi3audit --strict: 0 violations, computed baseline 3.11. The same wheel installed on CPython 3.11.15, 3.12.14, 3.13.12, 3.14.4, 3.15.0a8 (alpha) and 3.15.0: smoke checks with stdlib oracles pass on all six; tests/test_stable_abi.py 52 passed, 10 skipped (no _testcapi), and 60 passed, 2 skipped on 3.14.4",
+    "same_abi3_wheel": "Built with Py_LIMITED_API=0x030B0000; abi3audit --strict: 0 violations, computed baseline 3.11. The same wheel installed on CPython 3.11.15, 3.12.14, 3.13.12, 3.14.4, 3.15.0a8 (alpha), and 3.15.0: smoke checks with stdlib oracles pass on all six; tests/test_stable_abi.py 52 passed, 10 skipped (no _testcapi), and 60 passed, 2 skipped on 3.14.4",
     "CPython_full_suite": "CPython 3.14.4, PYTHONDEVMODE=1, installed wheel, including both standard-library compliance files: 14625 passed, 4 skipped (compliance alone: 138 passed, 2 skipped)",
     "PyPy_full_suite": "PyPy 3.11.17 (PyPy 8.0.1), including compliance and static-type immutability checks: 14597 passed, 32 skipped",
     "free_threaded_full_suite": "free-threaded CPython 3.13.11 (uv build), cp313t full-API wheel, PYTHON_GIL unset, GIL stays off after import, including compliance: 14619 passed, 10 skipped (8 need _testcapi, 1 bigmem 4 GiB, 1 needs sys.gettotalrefcount)",
     "free_threaded_import": "test_import_keeps_the_gil_disabled: a fresh process with PYTHON_GIL unset and no -X gil option keeps the GIL disabled after import",
-    "lint": "flake8, mypy (17 files), actionlint, git diff --check, strict Sphinx and twine check pass",
-    "reference_replacement": "Assignment-before-DECREF ordering matches the original Py_SETREF/Py_XSETREF semantics"
+    "lint": "flake8, mypy (17 files), actionlint, git diff --check, strict Sphinx, and twine check pass",
+    "reference_replacement": "Assignment-before-DECREF ordering matches the original Py_SETREF and Py_XSETREF semantics"
   },
   "limits": [
-    "Timings and tests are from one Linux x86_64 machine; macOS, Windows (including 3.14t) and ARM64 builds and the release audit are covered by CI jobs that were not run locally",
+    "Timings and tests are from one Linux x86_64 machine; macOS, Windows (including 3.14t), and ARM64 builds and the release audit are covered by CI jobs, and no CI has run for this branch",
     "AddressSanitizer and ThreadSanitizer CI jobs are kept but were not run locally",
-    "Limited-API builds allocate codec state with malloc/free (PyMem_RawMalloc is not in the 3.11 stable ABI), so tracemalloc does not see it there; full-API builds use PyMem_RawMalloc/PyMem_RawFree",
+    "Limited-API builds allocate codec state with malloc and free (PyMem_RawMalloc is not in the 3.11 stable ABI), so tracemalloc does not see it there; full-API builds use PyMem_RawMalloc and PyMem_RawFree",
     "The prototype strategy study used different binaries and a repeated Python source input; do not compare its ratios with results.json"
   ],
   "harness_sha256": "84e289a2d1c29275fedf74c7d637005ac2e0e2cb3ca75d82dbc9a5d6a3bc982f",
@@ -65,7 +65,7 @@
       "finished": "2026-11-05T11:06:36+02:00"
     },
     "repair-check.json": {
-      "description": "Earlier candidate (6488941 wheel c0cb4b75...) as baseline/control against this candidate, same protocol.",
+      "description": "Earlier candidate (6488941 wheel c0cb4b75...) as baseline and control against this candidate, same protocol.",
       "control_p95_inclusive": 0.04262142134103696,
       "control_max": 0.08182621891717956
     },

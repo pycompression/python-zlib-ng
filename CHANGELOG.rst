@@ -17,12 +17,16 @@ version 1.1.1-dev
   ``zlib_ng.compress()``, ``zlib_ng.decompress()``, ``compressobj()`` output,
   and ``decompressobj().decompress()`` and ``_ZlibDecompressor.decompress()``
   without ``max_length``. In the project's benchmark, decompressing 16 MiB took
-  1.05 to 1.20 times as long and the worst case, 1 MiB of zeros, 2.86 times as
+  up to 19% longer, and the worst case, 1 MiB of zeros, took 2.74 times as
   long; compression times did not change measurably. ``gzip_ng`` file reads
-  and ``_ZlibDecompressor.decompress(data, max_length)`` avoid the copy.
-  ``decompressobj().decompress(data, max_length)`` with a ``max_length`` above
-  16 KiB also copies, and briefly holds up to twice ``max_length``. PyPy and
-  free-threaded CPython are not affected.
+  avoid the copy, and so does ``_ZlibDecompressor.decompress(data,
+  max_length)`` when the output fills a ``max_length`` of at most 16 MiB. A
+  bounded call that returns less than its limit copies the shorter result
+  while still holding the full allocation. With a larger limit, the copy is
+  also made by ``_ZlibDecompressor.decompress(data, max_length)`` above 16 MiB
+  and by ``decompressobj().decompress(data, max_length)`` above 16 KiB, which
+  briefly holds up to twice ``max_length``. PyPy and free-threaded CPython are
+  not affected.
 + Compression or decompression whose output ends exactly at the size of its
   current output buffer no longer grows that buffer once more before
   returning.
@@ -35,6 +39,11 @@ version 1.1.1-dev
 + ``_ZlibDecompressor.decompress()`` no longer loses input when given more than
   4 GiB of data and a ``max_length`` that stops it early; the bytes are kept
   for the next call or in ``unused_data``.
++ ``decompressobj().decompress()`` no longer loses unread input beyond the
+  first 4 GiB of one call when the output limit or the end of the stream is
+  reached; it is kept in ``unconsumed_tail`` or ``unused_data``.
++ The internal ``_GzipReader.readinto()`` raises ``TypeError`` for a read-only
+  buffer instead of writing into it, which crashed on a read-only ``mmap``.
 + Reading with ``gzip_ng.open()`` from a file object whose ``read`` attribute
   lookup raises an error other than ``AttributeError`` now raises that error
   instead of an unrelated ``TypeError``.
