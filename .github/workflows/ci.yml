@@ -52,7 +52,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["ubuntu-latest", "macos-15-intel", "macos-latest", "windows-latest"]
+        os: ["ubuntu-latest", "macos-15-intel", "macos-latest", "windows-latest",
+             "windows-11-arm"]
     defaults:
       run:
         shell: bash
@@ -69,6 +70,8 @@ jobs:
         run: brew install make
       - uses: ilammy/msvc-dev-cmd@v1
         if: runner.os == 'Windows'
+        with:
+          arch: ${{ matrix.os == 'windows-11-arm' && 'arm64' || 'x64' }}
       - name: Build and audit the stable ABI wheel
         run: |
           python -m pip install build abi3audit
@@ -84,7 +87,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["ubuntu-latest", "macos-15-intel", "macos-latest", "windows-latest"]
+        os: ["ubuntu-latest", "macos-15-intel", "macos-latest", "windows-latest",
+             "windows-11-arm"]
         python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
     defaults:
       run:
