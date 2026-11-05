@@ -2907,7 +2907,16 @@ static PyObject *
 GzipReader_readinto(GzipReader *self, PyObject *buffer_obj)
 {
     Py_buffer view;
-    if (PyObject_GetBuffer(buffer_obj, &view, PyBUF_SIMPLE) < 0) {
+    if (PyObject_GetBuffer(buffer_obj, &view, PyBUF_WRITABLE) < 0) {
+        /* Raise TypeError, like the readinto() methods of io. */
+        PyErr_Clear();
+        PyObject *type_name = PyType_GetName(Py_TYPE(buffer_obj));
+        if (type_name != NULL) {
+            PyErr_Format(PyExc_TypeError,
+                         "readinto() argument must be read-write bytes-like "
+                         "object, not %U", type_name);
+            Py_DECREF(type_name);
+        }
         return NULL;
     }
     uint8_t *buffer = view.buf;

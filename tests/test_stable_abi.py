@@ -500,3 +500,10 @@ def test_invalid_input_releases_output(operation, error):
             tracemalloc.stop()
     # The output grew past 256 KiB before each error.
     assert retained < 64 * 1024
+
+
+@pytest.mark.parametrize("buffer", [b"abc", memoryview(b"abc"), "abc"])
+def test_gzip_reader_readinto_rejects_read_only_buffers(buffer):
+    reader = zlib_ng._GzipReader(io.BytesIO(gzip.compress(b"data")))
+    with pytest.raises(TypeError, match="read-write bytes-like object"):
+        reader.readinto(buffer)
