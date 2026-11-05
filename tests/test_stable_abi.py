@@ -341,3 +341,42 @@ assert decode(operation()) == data
     result = subprocess.run([sys.executable, "-c", code],
                             capture_output=True, text=True, timeout=120)
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("name,factory", [("_Compress", "compressobj"),
+                                          ("_Decompress", "decompressobj")])
+def test_factory_retains_type_after_module_attribute_is_deleted(name, factory):
+    # The module state owns the factory types; no test-side strong reference
+    # may keep the type alive.
+    code = f"""
+import gc
+import weakref
+from zlib_ng import zlib_ng
+reference = weakref.ref(getattr(zlib_ng, {name!r}))
+delattr(zlib_ng, {name!r})
+gc.collect()
+obj = getattr(zlib_ng, {factory!r})()
+assert type(obj) is reference()
+"""
+    result = subprocess.run([sys.executable, "-c", code],
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("size", [1, 65536, 65537])
+@pytest.mark.parametrize("buffer_type", [
+    bytearray, lambda size: memoryview(bytearray(size))])
+def test_gzip_reader_readinto(size, buffer_type):
+    data = (bytes(range(256)) * (size // 256 + 1))[:size]
+    reader = zlib_ng._GzipReader(io.BytesIO(gzip.compress(data)))
+    buffer = buffer_type(65536)
+    first = reader.readinto(buffer)
+    # Exact for a full buffer, short at the end of the stream.
+    assert first == min(size, 65536)
+    output = [bytes(buffer[:first])]
+    while True:
+        written = reader.readinto(buffer)
+        if written == 0:
+            break
+        output.append(bytes(buffer[:written]))
+    assert b"".join(output) == data
