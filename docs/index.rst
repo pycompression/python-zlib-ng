@@ -40,6 +40,10 @@ Installation with pip
 Installation is supported on Linux, MacOS and Windows. On most platforms
 wheels are provided. Regular CPython 3.11 and newer share a stable ABI wheel
 for each platform. Free-threaded CPython and PyPy use separate wheels.
+On the stable ABI wheel, calls whose output size is not known in advance, such
+as ``zlib_ng.decompress()``, copy their result once more and briefly hold that
+copy in memory, which makes large decompressions slower; the changelog gives
+the measured cost. ``gzip_ng`` file reads are not affected.
 The installation will include a staticallly linked version of zlib-ng.
 If a wheel is not provided for your system the
 installation will build zlib-ng first in a temporary directory. Please check the

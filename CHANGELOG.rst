@@ -7,12 +7,40 @@ Changelog
 .. This document is user facing. Please word the changes in such a way
 .. that users understand how the changes affect the new version.
 
-Unreleased
+version 1.1.1-dev
 -----------------
-+ Regular CPython 3.11 and newer share stable ABI wheels. PyPy and
-  free-threaded CPython keep their interpreter-specific wheels.
-+ Avoid an extra output allocation when compression or decompression finishes
-  exactly at the end of its buffer.
++ Regular CPython 3.11 and newer share one stable ABI wheel per platform, so
+  new CPython releases no longer need new wheels. PyPy and free-threaded
+  CPython keep their interpreter-specific wheels.
++ On the stable ABI wheels, calls whose output size is not known in advance
+  copy their result once more and briefly hold that extra copy in memory:
+  ``zlib_ng.compress()``, ``zlib_ng.decompress()``, ``compressobj()`` output,
+  and ``decompressobj().decompress()`` and ``_ZlibDecompressor.decompress()``
+  without ``max_length``. In the project's benchmark, decompressing 16 MiB took
+  1.05 to 1.20 times as long and the worst case, 1 MiB of zeros, 2.86 times as
+  long; compression times did not change measurably. ``gzip_ng`` file reads
+  and ``_ZlibDecompressor.decompress(data, max_length)`` avoid the copy.
+  ``decompressobj().decompress(data, max_length)`` with a ``max_length`` above
+  16 KiB also copies, and briefly holds up to twice ``max_length``. PyPy and
+  free-threaded CPython are not affected.
++ Compression or decompression whose output ends exactly at the size of its
+  current output buffer no longer grows that buffer once more before
+  returning.
++ ``crc32_combine()`` and the internal ``_GzipReader.read()`` and
+  ``_GzipReader.seek()`` raise ``TypeError`` instead of ``SystemError`` for
+  arguments of the wrong type.
++ ``_ZlibDecompressor`` uses the ``zdict`` it was given for a stream that
+  needs a preset dictionary, and otherwise raises ``zlib_ng.error``, instead
+  of raising ``SystemError`` in both cases.
++ ``_ZlibDecompressor.decompress()`` no longer loses input when given more than
+  4 GiB of data and a ``max_length`` that stops it early; the bytes are kept
+  for the next call or in ``unused_data``.
++ Reading with ``gzip_ng.open()`` from a file object whose ``read`` attribute
+  lookup raises an error other than ``AttributeError`` now raises that error
+  instead of an unrelated ``TypeError``.
++ A failure while importing ``zlib_ng``, such as running out of memory, is
+  reported as that error instead of ``SystemError`` and no longer leaks the
+  partially created module.
 
 version 1.1.0
 -----------------
