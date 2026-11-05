@@ -40,7 +40,7 @@ where = ["src"]
 include = ["zlib_ng"]
 
 [tool.setuptools.package-data]
-zlib_ng = ['*.pyi', 'py.typed', 'zlib-ng/LICENSE', 'zlib-ng/README.md']
+zlib_ng = ['*.pyi', 'py.typed', 'zlib-ng/LICENSE.md', 'zlib-ng/README.md']
 [tool.setuptools.exclude-package-data]
 zlib_ng = [
         "*.c",
