@@ -270,3 +270,74 @@ assert module.decompress(module.compress(b"test")) == b"test"
                                  zlib_ng._ParallelCompress])
 def test_constructible_types_keep_their_docstrings(cls):
     assert cls.__doc__
+
+
+ALLOCATION_FAILURE_OPERATIONS = {
+    # name: (operation, its output decoded by the standard library)
+    "decompress": ("zlib_ng.decompress(packed)", "result"),
+    "compressobj": ("stream_compress()", "zlib.decompress(result)"),
+    "decompressobj": ("stream_decompress()", "result"),
+    "_ZlibDecompressor": ("zlib_ng._ZlibDecompressor().decompress(packed)",
+                          "result"),
+    "_GzipReader.read": ("zlib_ng._GzipReader(io.BytesIO(gzipped))"
+                         ".read(len(data))", "result"),
+    "_GzipReader.readall": ("zlib_ng._GzipReader(io.BytesIO(gzipped))"
+                            ".readall()", "result"),
+}
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs _testcapi.set_nomemory")
+@pytest.mark.parametrize("name", ALLOCATION_FAILURE_OPERATIONS)
+def test_output_allocation_failure_cleanup(name):
+    pytest.importorskip("_testcapi")
+    operation, decode = ALLOCATION_FAILURE_OPERATIONS[name]
+    code = f"""
+import gzip
+import io
+import random
+import zlib
+import _testcapi
+from zlib_ng import zlib_ng
+data = random.Random(240).randbytes(256 * 1024)
+packed = zlib.compress(data)
+gzipped = gzip.compress(data)
+def stream_compress():
+    obj = zlib_ng.compressobj()
+    return obj.compress(data) + obj.flush()
+def stream_decompress():
+    obj = zlib_ng.decompressobj()
+    return obj.decompress(packed) + obj.flush()
+def operation():
+    return {operation}
+def decode(result):
+    return {decode}
+failures = successes = start = 0
+# Fail one allocation at a time until the operation no longer reaches the
+# failing allocation.
+while successes < 20:
+    _testcapi.set_nomemory(start, start + 1)
+    try:
+        result = operation()
+    except MemoryError:
+        failures += 1
+        successes = 0
+    except zlib_ng.error as error:
+        # zlib-ng reports a failed state allocation as Z_MEM_ERROR (-4).
+        assert "Error -4" in str(error), (start, error)
+        failures += 1
+        successes = 0
+    else:
+        _testcapi.remove_mem_hooks()
+        assert decode(result) == data, start
+        successes += 1
+    finally:
+        _testcapi.remove_mem_hooks()
+    start += 1
+assert failures
+# A clean call after all failure paths still produces valid output.
+assert decode(operation()) == data
+"""
+    result = subprocess.run([sys.executable, "-c", code],
+                            capture_output=True, text=True, timeout=120)
+    assert result.returncode == 0, result.stderr
