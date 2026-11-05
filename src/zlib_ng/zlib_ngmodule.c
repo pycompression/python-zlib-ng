@@ -1906,7 +1906,7 @@ ParallelCompress_compress_and_crc(ParallelCompress *self,
             PyExc_RuntimeError, 
             "Developer error input bytes are still available: %u. "
             "Please contact the developers by creating an issue at "
-            "https://github.com/pycompression/python-isal/issues", 
+            "https://github.com/pycompression/python-zlib-ng/issues", 
             self->zst.avail_in);
         goto error;
     }
@@ -1936,7 +1936,7 @@ static PyMethodDef ParallelCompress_methods[] = {
 
 #ifdef PYPY_VERSION
 static PyTypeObject ParallelCompress_Type_spec = {
-    .tp_name = "isal_zlib._ParallelCompress",
+    .tp_name = "zlib_ng._ParallelCompress",
     .tp_basicsize = sizeof(ParallelCompress),
     .tp_doc = PyDoc_STR(
         "A reusable zstream and buffer fast parallel compression."),
@@ -1953,7 +1953,7 @@ static PyType_Slot ParallelCompress_Type_slots[] = {
 };
 
 static PyType_Spec ParallelCompress_Type_spec = {
-    .name = "isal_zlib._ParallelCompress",
+    .name = "zlib_ng._ParallelCompress",
     .basicsize = sizeof(ParallelCompress),
     .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
     .slots = ParallelCompress_Type_slots,
@@ -3144,7 +3144,7 @@ static PyGetSetDef GzipReader_properties[] = {
 
 #ifdef PYPY_VERSION
 static PyTypeObject GzipReader_Type_spec = {
-    .tp_name = "isal_zlib._GzipReader",
+    .tp_name = "zlib_ng._GzipReader",
     .tp_basicsize = sizeof(GzipReader),
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_dealloc = (destructor)GzipReader_dealloc,
@@ -3164,7 +3164,7 @@ static PyType_Slot GzipReader_Type_slots[] = {
 };
 
 static PyType_Spec GzipReader_Type_spec = {
-    .name = "isal_zlib._GzipReader",
+    .name = "zlib_ng._GzipReader",
     .basicsize = sizeof(GzipReader),
     .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_IMMUTABLETYPE,
     .slots = GzipReader_Type_slots,

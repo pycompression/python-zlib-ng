@@ -188,3 +188,12 @@ def test_filled_gzip_reader_chunk_is_not_copied():
 def test_argument_parsing_failure_raises_type_error(call):
     with pytest.raises(TypeError):
         call()
+
+
+def test_extension_types_report_this_module():
+    types = [value for value in vars(zlib_ng).values()
+             if isinstance(value, type)]
+    types += [type(zlib_ng.compressobj()), type(zlib_ng.decompressobj())]
+    assert len(types) >= 7
+    for cls in types:
+        assert cls.__module__.split(".")[0] == "zlib_ng", cls
