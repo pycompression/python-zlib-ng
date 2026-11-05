@@ -176,3 +176,15 @@ def test_filled_gzip_reader_chunk_is_not_copied():
     output, peak = _traced_peak(lambda: reader.read(len(data)))
     assert output == data
     assert peak < len(data) * 3 // 2
+
+
+@pytest.mark.parametrize("call", [
+    lambda: zlib_ng.crc32_combine("x", 1, 1),
+    lambda: zlib_ng._ParallelCompress("x"),
+    # A bad first seek argument would leave the offset unset; use whence.
+    lambda: zlib_ng._GzipReader(io.BytesIO(gzip.compress(b"x"))).seek(0, "x"),
+    lambda: zlib_ng._GzipReader(io.BytesIO(gzip.compress(b"x"))).read("x"),
+])
+def test_argument_parsing_failure_raises_type_error(call):
+    with pytest.raises(TypeError):
+        call()
