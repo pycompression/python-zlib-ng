@@ -383,6 +383,12 @@ jobs:
             PYTHON_ZLIB_NG_BUILD_CACHE=True
             PYTHON_ZLIB_NG_BUILD_CACHE_FILE=${{ runner.temp }}/build_cache
             CFLAGS="-O3 -DNDEBUG"
+      - name: Audit the stable ABI wheels
+        # bash expands the wheel glob on Windows too.
+        shell: bash
+        run: |
+          python -m pip install abi3audit
+          python -m abi3audit --strict dist/*-cp311-abi3-*.whl
       - uses: actions/upload-artifact@v7
         with:
           name: "cibw-${{ runner.os }}-${{ runner.arch }}-${{ matrix.cibw_archs_linux }}"
