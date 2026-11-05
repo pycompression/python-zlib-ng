@@ -1305,6 +1305,11 @@ decompress_buf(ZlibDecompressor *self, Py_ssize_t max_length)
                 /* The output limit is reached. Leave both loops: another
                    input chunk would overwrite zst.avail_in, which still
                    counts unconsumed bytes of this chunk. */
+                if (err == Z_NEED_DICT) {
+                    /* The preset dictionary was applied; inflation resumes
+                       on the next call. */
+                    err = Z_OK;
+                }
                 goto input_left;
             }
             Py_BEGIN_ALLOW_THREADS

@@ -424,5 +424,11 @@ def test_zlib_decompressor_uses_or_requests_the_preset_dictionary():
     decompressor = zlib_ng._ZlibDecompressor(zdict=dictionary)
     assert decompressor.decompress(packed) == data
     assert decompressor.eof
+    # The dictionary is applied before any output; a zero output limit
+    # keeps the input for the next call.
+    decompressor = zlib_ng._ZlibDecompressor(zdict=dictionary)
+    assert decompressor.decompress(packed, 0) == b""
+    assert decompressor.decompress(b"") == data
+    assert decompressor.eof
     with pytest.raises(zlib_ng.error):
         zlib_ng._ZlibDecompressor().decompress(packed)
