@@ -1906,7 +1906,7 @@ ParallelCompress_compress_and_crc(ParallelCompress *self,
             PyExc_RuntimeError, 
             "Developer error input bytes are still available: %u. "
             "Please contact the developers by creating an issue at "
-            "https://github.com/pycompression/python-zlib-ng/issues", 
+            "https://github.com/pycompression/python-zlib-ng/issues",
             self->zst.avail_in);
         goto error;
     }
