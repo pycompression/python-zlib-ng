@@ -308,9 +308,11 @@ def test_output_allocation_failure_cleanup(name):
     pytest.importorskip("_testcapi")
     operation, decode = ALLOCATION_FAILURE_OPERATIONS[name]
     code = f"""
+import gc
 import gzip
 import io
 import random
+import tracemalloc
 import zlib
 import _testcapi
 from zlib_ng import zlib_ng
@@ -327,29 +329,39 @@ def operation():
     return {operation}
 def decode(result):
     return {decode}
-failures = successes = start = 0
-# Fail one allocation at a time until the operation no longer reaches the
-# failing allocation.
-while successes < 20:
-    _testcapi.set_nomemory(start, start + 1)
-    try:
-        result = operation()
-    except MemoryError:
-        failures += 1
-        successes = 0
-    except zlib_ng.error as error:
-        # zlib-ng reports a failed state allocation as Z_MEM_ERROR (-4).
-        assert "Error -4" in str(error), (start, error)
-        failures += 1
-        successes = 0
-    else:
-        _testcapi.remove_mem_hooks()
-        assert decode(result) == data, start
-        successes += 1
-    finally:
-        _testcapi.remove_mem_hooks()
-    start += 1
-assert failures
+def fail_each_allocation():
+    failures = successes = start = 0
+    # Fail one allocation at a time until the operation no longer reaches
+    # the failing allocation.
+    while successes < 20:
+        _testcapi.set_nomemory(start, start + 1)
+        try:
+            result = operation()
+        except MemoryError:
+            failures += 1
+            successes = 0
+        except zlib_ng.error as error:
+            # zlib-ng reports a failed state allocation as Z_MEM_ERROR (-4).
+            assert "Error -4" in str(error), (start, error)
+            failures += 1
+            successes = 0
+        else:
+            _testcapi.remove_mem_hooks()
+            assert decode(result) == data, start
+            successes += 1
+        finally:
+            _testcapi.remove_mem_hooks()
+        start += 1
+    assert failures
+# The first pass fills caches that would otherwise look like leaks.
+fail_each_allocation()
+tracemalloc.start()
+fail_each_allocation()
+gc.collect()
+retained = tracemalloc.get_traced_memory()[0]
+tracemalloc.stop()
+# A single leaked output buffer is at least 16 KiB.
+assert retained < 8 * 1024, retained
 # A clean call after all failure paths still produces valid output.
 assert decode(operation()) == data
 """
@@ -432,3 +444,59 @@ def test_zlib_decompressor_uses_or_requests_the_preset_dictionary():
     assert decompressor.eof
     with pytest.raises(zlib_ng.error):
         zlib_ng._ZlibDecompressor().decompress(packed)
+
+
+ERROR_DATA = os.urandom(1024 * 1024)
+ZLIB_DATA = zlib.compress(ERROR_DATA)
+GZIP_DATA = gzip.compress(ERROR_DATA)
+
+
+def corrupt_last_byte(data):
+    return data[:-1] + bytes([data[-1] ^ 0xFF])
+
+
+def read_until_error(reader):
+    # read() returns what it decoded before the truncation; the next call
+    # raises.
+    while reader.read(len(ERROR_DATA) + 1):
+        pass
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs CPython tracemalloc allocation accounting")
+@pytest.mark.parametrize("operation,error", [
+    (lambda: zlib_ng.decompress(ZLIB_DATA[:-1]), zlib_ng.error),
+    (lambda: zlib_ng.decompressobj().decompress(
+        corrupt_last_byte(ZLIB_DATA)), zlib_ng.error),
+    (lambda: zlib_ng._ZlibDecompressor().decompress(
+        corrupt_last_byte(ZLIB_DATA)), zlib_ng.error),
+    (lambda: read_until_error(
+        zlib_ng._GzipReader(io.BytesIO(GZIP_DATA[:-1]))), EOFError),
+    (lambda: zlib_ng._GzipReader(io.BytesIO(GZIP_DATA[:-1])).readall(),
+     EOFError),
+], ids=["decompress", "decompressobj", "_ZlibDecompressor",
+        "_GzipReader.read", "_GzipReader.readall"])
+def test_invalid_input_releases_output(operation, error):
+    import tracemalloc
+
+    def fail_repeatedly():
+        for _ in range(10):
+            with pytest.raises(error):
+                operation()
+
+    # The first pass fills caches that would otherwise look like leaks.
+    fail_repeatedly()
+    gc.collect()
+    tracing = tracemalloc.is_tracing()
+    if not tracing:
+        tracemalloc.start()
+    before, _ = tracemalloc.get_traced_memory()
+    try:
+        fail_repeatedly()
+        gc.collect()
+        retained = tracemalloc.get_traced_memory()[0] - before
+    finally:
+        if not tracing:
+            tracemalloc.stop()
+    # The output grew past 256 KiB before each error.
+    assert retained < 64 * 1024
