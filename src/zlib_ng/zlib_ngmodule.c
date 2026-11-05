@@ -1952,12 +1952,14 @@ static PyMethodDef ParallelCompress_methods[] = {
     {NULL},
 };
 
+PyDoc_STRVAR(ParallelCompress__doc__,
+"A reusable zstream and buffer fast parallel compression.");
+
 #ifdef PYPY_VERSION
 static PyTypeObject ParallelCompress_Type_spec = {
     .tp_name = "zlib_ng._ParallelCompress",
     .tp_basicsize = sizeof(ParallelCompress),
-    .tp_doc = PyDoc_STR(
-        "A reusable zstream and buffer fast parallel compression."),
+    .tp_doc = ParallelCompress__doc__,
     .tp_dealloc = (destructor)ParallelCompress_dealloc,
     .tp_new = ParallelCompress__new__,
     .tp_methods = ParallelCompress_methods,
@@ -1966,6 +1968,7 @@ static PyTypeObject ParallelCompress_Type_spec = {
 static PyType_Slot ParallelCompress_Type_slots[] = {
     {Py_tp_dealloc, (void *)(destructor)ParallelCompress_dealloc},
     {Py_tp_new, (void *)ParallelCompress__new__},
+    {Py_tp_doc, (void *)ParallelCompress__doc__},
     {Py_tp_methods, (void *)ParallelCompress_methods},
     {0, NULL}
 };

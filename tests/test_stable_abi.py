@@ -263,3 +263,10 @@ assert module.decompress(module.compress(b"test")) == b"test"
     result = subprocess.run([sys.executable, "-c", code],
                             capture_output=True, text=True, timeout=60)
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("cls", [zlib_ng._ZlibDecompressor,
+                                 zlib_ng._GzipReader,
+                                 zlib_ng._ParallelCompress])
+def test_constructible_types_keep_their_docstrings(cls):
+    assert cls.__doc__
