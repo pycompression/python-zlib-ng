@@ -128,3 +128,51 @@ from zlib_ng import zlib_ng
 assert not sys._is_gil_enabled()
 assert zlib_ng.decompress(zlib_ng.compress(b'test')) == b'test'
 """], check=True, env=env)
+
+
+def _traced_peak(operation):
+    """Return the result of operation() and the traced memory it peaked at."""
+    tracemalloc = pytest.importorskip("tracemalloc")
+    gc.collect()
+    tracing = tracemalloc.is_tracing()
+    if not tracing:
+        tracemalloc.start()
+    try:
+        before, _ = tracemalloc.get_traced_memory()
+        tracemalloc.reset_peak()
+        result = operation()
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        if not tracing:
+            tracemalloc.stop()
+    return result, peak - before
+
+
+# 1 MiB + 137 stays below the 16 MiB initial-allocation cap, so the output
+# limit is allocated at once and a filled result can be returned as is.
+FILLED_SIZE = 1024 * 1024 + 137
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs CPython tracemalloc allocation accounting")
+def test_filled_bounded_decompressor_output_is_not_copied():
+    data = (b"filled buffer" * (FILLED_SIZE // 13 + 1))[:FILLED_SIZE]
+    packed = zlib.compress(data)
+    decoder = zlib_ng._ZlibDecompressor()
+    output, peak = _traced_peak(
+        lambda: decoder.decompress(packed, max_length=len(data)))
+    assert output == data
+    # Codec state fits well within this margin; a second output copy does not.
+    assert peak < len(data) * 3 // 2
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs CPython tracemalloc allocation accounting")
+def test_filled_gzip_reader_chunk_is_not_copied():
+    data = (b"filled buffer" * (FILLED_SIZE // 13 + 1))[:FILLED_SIZE]
+    # read() fills at most 10 * buffersize bytes per call.
+    reader = zlib_ng._GzipReader(io.BytesIO(gzip.compress(data)),
+                                 len(data) // 10 + 1)
+    output, peak = _traced_peak(lambda: reader.read(len(data)))
+    assert output == data
+    assert peak < len(data) * 3 // 2
