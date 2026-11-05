@@ -48,6 +48,80 @@ jobs:
       - name: Run tox -e ${{ matrix.tox_env }}
         run: tox -e ${{ matrix.tox_env }}
 
+  build-abi3-test-wheel:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-15-intel", "macos-latest", "windows-latest",
+             "windows-11-arm"]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install build dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install make
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+        with:
+          arch: ${{ matrix.os == 'windows-11-arm' && 'arm64' || 'x64' }}
+      - name: Build and audit the stable ABI wheel
+        run: |
+          python -m pip install build abi3audit
+          python -m build --wheel --outdir wheelhouse
+          python -m abi3audit --strict wheelhouse/*-cp311-abi3-*.whl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: abi3-test-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  test-abi3-wheel:
+    needs: build-abi3-test-wheel
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "macos-15-intel", "macos-latest", "windows-latest",
+             "windows-11-arm"]
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONDEVMODE: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: abi3-test-${{ matrix.os }}
+          path: wheelhouse
+      - name: Install the same wheel on each Python version
+        run: |
+          python -m pip install pytest pytest-timeout
+          python -m pip install --no-index --find-links wheelhouse zlib-ng
+      - name: Run the tests available in this interpreter
+        run: |
+          python - <<'PYTEST'
+          import importlib.util
+          import subprocess
+          import sys
+          command = [sys.executable, "-m", "pytest", "tests"]
+          if importlib.util.find_spec("test") is None:
+              command += ["--ignore=tests/test_zlib_compliance.py",
+                          "--ignore=tests/test_gzip_compliance.py"]
+          raise SystemExit(subprocess.call(command))
+          PYTEST
+
   test-static:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -70,6 +144,8 @@ jobs:
             python-version: "3.11"
           - os: "windows-latest"
             python-version: "3.11"
+          - os: "windows-latest"
+            python-version: "3.14t"
           - os: "windows-11-arm"
             python-version: "3.11"
     steps:
@@ -179,7 +255,7 @@ jobs:
           submodules: recursive
       - name: Install build dependencies
         run: apt-get update && apt-get install -y cmake
-      - name: Install python-isal with ${{ matrix.sanitizer }} sanitizer
+      - name: Install python-zlib-ng with ${{ matrix.sanitizer }} sanitizer
         # setuptools-scm needs git, and the container user does not own the
         # repository.
         run: |
@@ -187,7 +263,7 @@ jobs:
           python -m pip install . pytest pytest-timeout
         env:
           # The extension modules get -fsanitize from CPython. CFLAGS adds it
-          # to the C code of ISA-L.
+          # to the C code of zlib-ng.
           CFLAGS: -fsanitize=${{ matrix.sanitizer }} -fno-omit-frame-pointer -g
       - name: Run tests
         # Do not set PYTHONDEVMODE. Its debug allocator pads each allocation,
@@ -205,6 +281,7 @@ jobs:
       - lint
       - package-checks
       - test-static
+      - test-abi3-wheel
       - test-dynamic
       - test-arch
       - test-sanitizers
@@ -231,6 +308,7 @@ jobs:
       - lint
       - package-checks
       - test-static
+      - test-abi3-wheel
       - test-dynamic
       - test-arch
       - test-sanitizers
@@ -273,8 +351,8 @@ jobs:
         run: cibuildwheel --output-dir dist
         env:
           CIBW_ENABLE: "pypy"
-          # Skip 32 bit, macosx_arm64 causes issues on cpython 3.9
-          CIBW_SKIP: "*-win32 *-manylinux_i686 cp38-macosx_arm64 cp39-win_arm64 cp310-win_arm64"
+          # Skip 32 bit
+          CIBW_SKIP: "*-win32 *-manylinux_i686"
           CIBW_ARCHS_LINUX: ${{ matrix.cibw_archs_linux }}
           CIBW_TEST_REQUIRES: "pytest"
           # Simple tests that requires the project to be build correctly
@@ -282,15 +360,18 @@ jobs:
             pytest {project}/tests/test_zlib_compliance.py 
             {project}/tests/test_gzip_compliance.py
             {project}/tests/test_gzip_ng.py
+            {project}/tests/test_stable_abi.py
           CIBW_TEST_COMMAND_MACOS: >-
             pytest {project}/tests/test_zlib_compliance.py 
             {project}/tests/test_gzip_compliance.py
             {project}/tests/test_gzip_ng.py
+            {project}/tests/test_stable_abi.py
           # Windows does not have the test module in the included python.
           # Run compatibility tests instead.
           CIBW_TEST_COMMAND_WINDOWS: >-
             pytest {project}/tests/test_compat.py
             {project}/tests/test_gzip_ng.py
+            {project}/tests/test_stable_abi.py
           CIBW_ENVIRONMENT_LINUX: >-
             PYTHON_ZLIB_NG_BUILD_CACHE=True
             PYTHON_ZLIB_NG_BUILD_CACHE_FILE=/tmp/build_cache
@@ -302,6 +383,12 @@ jobs:
             PYTHON_ZLIB_NG_BUILD_CACHE=True
             PYTHON_ZLIB_NG_BUILD_CACHE_FILE=${{ runner.temp }}/build_cache
             CFLAGS="-O3 -DNDEBUG"
+      - name: Audit the stable ABI wheels
+        # bash expands the wheel glob on Windows too.
+        shell: bash
+        run: |
+          python -m pip install abi3audit
+          python -m abi3audit --strict dist/*-cp311-abi3-*.whl
       - uses: actions/upload-artifact@v7
         with:
           name: "cibw-${{ runner.os }}-${{ runner.arch }}-${{ matrix.cibw_archs_linux }}"

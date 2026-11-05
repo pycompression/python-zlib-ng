@@ -1,0 +1,48 @@
+{
+  "scope": "seven shared output-buffer paths; unknown-size decompression confirmation and compression safety spots; not full ABI/reader migration",
+  "variants": [
+    "baseline",
+    "baseline-eof",
+    "eof-control",
+    "buffers-eof",
+    "segmented-eof",
+    "bytesio-eof",
+    "bytesio-hybrid-eof"
+  ],
+  "repeats": 9,
+  "source_commit": "39cec01898a4a44ac988a40e98fd8d8cbbcaacd9",
+  "vendor_commit": "12731092979c6d07f42da27da673a9f6c7b13586",
+  "python": "3.11.15",
+  "compiler_flags": "-O3 -DNDEBUG -fPIC",
+  "affinity": [
+    3
+  ],
+  "corpora": [
+    "FASTQ fixture",
+    "Python source",
+    "seeded random bytes",
+    "zeros"
+  ],
+  "primary_reference": "baseline-eof",
+  "control": "independent process of tuned full-API baseline+EOF binary",
+  "timing": "thread CPU nanoseconds and wall nanoseconds; warm calls; identical per-case iteration count across variants",
+  "sample_target_seconds": 0.015,
+  "minimum_rounds": 9,
+  "input_path": "/tmp/isal-abi-investigation/unbounded/data; nonpower compressed copies under local unbounded/data",
+  "header_sha256": "d832235633687a043af374c87b5bf7d27f03df267220da2baecf9a5b6b83268d",
+  "hardware": "Intel Core i7-3770, x86_64 Linux, no AVX2",
+  "benchmark_window": "exclusive with respect to other investigation benchmark/test activity",
+  "decompression_sizes": [
+    1024,
+    65536,
+    1048713,
+    16777353
+  ],
+  "compression_sizes": [
+    1024,
+    65536,
+    1048576
+  ],
+  "cases": 72,
+  "cohort_rationale": "User open question is unbounded decompression mitigation. Broader 132-case run dominated by unrelated large level6 compression; all completed samples retained as exploratory. Focus specified before confirmation; no per-case performance-based exclusions."
+}

@@ -50,7 +50,7 @@ BadGzipFile = gzip.BadGzipFile  # type: ignore
 # The open method was copied from the CPython source with minor adjustments.
 def open(filename, mode="rb", compresslevel=_COMPRESS_LEVEL_TRADEOFF,
          encoding=None, errors=None, newline=None):
-    """Open a gzip-compressed file in binary or text mode. This uses the isa-l
+    """Open a gzip-compressed file in binary or text mode. This uses the zlib-ng
     library for optimized speed.
 
     The filename argument can be an actual filename (a str or bytes object), or

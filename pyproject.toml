@@ -11,7 +11,7 @@ keywords=["zlib-ng", "zlib", "compression", "deflate", "gzip"]
 authors = [{name = "Leiden University Medical Center"},
            {email = "r.h.p.vorderman@lumc.nl"}]
 readme = "README.rst"
-requires-python = ">=3.9"  # Because of setuptools version
+requires-python = ">=3.11"
 classifiers = [
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3",
@@ -40,7 +40,7 @@ where = ["src"]
 include = ["zlib_ng"]
 
 [tool.setuptools.package-data]
-zlib_ng = ['*.pyi', 'py.typed', 'zlib-ng/LICENSE', 'zlib-ng/README.md']
+zlib_ng = ['*.pyi', 'py.typed', 'zlib-ng/LICENSE.md', 'zlib-ng/README.md']
 [tool.setuptools.exclude-package-data]
 zlib_ng = [
         "*.c",

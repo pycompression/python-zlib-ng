@@ -1,0 +1,509 @@
+"""Ownership and output boundaries shared by full and limited API builds."""
+import copy
+import gc
+import gzip
+import io
+import os
+import subprocess
+import sys
+import sysconfig
+import zlib
+from typing import Any
+
+import pytest
+
+from zlib_ng import zlib_ng
+
+
+@pytest.mark.parametrize("size", [0, 16384, 16385, 65536, 65536 + 137])
+def test_output_boundaries(size):
+    data = (bytes(range(256)) * ((size + 255) // 256))[:size]
+    packed = zlib.compress(data)
+    assert zlib_ng.decompress(packed) == data
+    decoder = zlib_ng._ZlibDecompressor()
+    output = [decoder.decompress(packed, 16384)]
+    while not decoder.eof:
+        output.append(decoder.decompress(b"", 16384))
+    assert b"".join(output) == data
+
+    reader = zlib_ng._GzipReader(io.BytesIO(gzip.compress(data)), 4096)
+    assert reader.read(16384) + reader.readall() == data
+
+
+@pytest.mark.parametrize("factory", [zlib_ng.compressobj,
+                                     zlib_ng.decompressobj,
+                                     zlib_ng._ZlibDecompressor,
+                                     lambda: zlib_ng._GzipReader(io.BytesIO()),
+                                     lambda: zlib_ng._ParallelCompress(65536, -1)])
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Uses CPython reference counts")
+def test_heap_type_lifetime(factory):
+    obj = factory()
+    cls = type(obj)
+    gc.collect()
+    before = sys.getrefcount(cls)
+    for _ in range(100):
+        temporary = factory()
+    del temporary
+    gc.collect()
+    assert sys.getrefcount(cls) == before
+
+
+@pytest.mark.parametrize("factory", [zlib_ng.compressobj,
+                                     zlib_ng.decompressobj,
+                                     zlib_ng._ZlibDecompressor,
+                                     lambda: zlib_ng._GzipReader(io.BytesIO()),
+                                     lambda: zlib_ng._ParallelCompress(65536, -1)])
+def test_type_is_immutable_and_not_subclassable(factory):
+    cls = type(factory())
+    with pytest.raises(TypeError):
+        cls.unexpected_attribute = None
+    with pytest.raises(TypeError):
+        type("Derived", (cls,), {})
+
+
+@pytest.mark.parametrize("factory", [zlib_ng.compressobj, zlib_ng.decompressobj])
+def test_factory_type_cannot_be_instantiated(factory):
+    with pytest.raises(TypeError):
+        type(factory())()
+
+
+@pytest.mark.parametrize("factory", [zlib_ng.compressobj, zlib_ng.decompressobj])
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Uses CPython reference counts")
+def test_factory_only_types_and_copy_lifetimes(factory):
+    obj = factory()
+    cls = type(obj)
+    with pytest.raises(TypeError):
+        cls()
+    gc.collect()
+    before = sys.getrefcount(cls)
+    for _ in range(100):
+        cloned = copy.copy(obj)
+        assert type(cloned) is cls
+    del cloned
+    gc.collect()
+    assert sys.getrefcount(cls) == before
+
+
+def test_module_factory_types_after_subinterpreter_import():
+    # The legacy module has process-global errors. Keep the import isolated
+    # from tests of exception identity in this interpreter.
+    _testcapi = pytest.importorskip("_testcapi")
+    if not hasattr(_testcapi, "run_in_subinterp"):
+        pytest.skip("Needs _testcapi.run_in_subinterp")
+    subprocess.run([sys.executable, "-c", """
+import _testcapi
+from zlib_ng import zlib_ng
+compress_type = type(zlib_ng.compressobj())
+decompress_type = type(zlib_ng.decompressobj())
+assert _testcapi.run_in_subinterp('from zlib_ng import zlib_ng; '
+    'zlib_ng.decompress(zlib_ng.compress(b"test"))') == 0
+assert type(zlib_ng.compressobj()) is compress_type
+assert type(zlib_ng.decompressobj()) is decompress_type
+"""], check=True)
+
+
+@pytest.mark.parametrize("size", [-1, 2**32])
+def test_invalid_parallel_buffer_size(size):
+    with pytest.raises(ValueError):
+        zlib_ng._ParallelCompress(size, -1)
+
+
+def test_failed_reader_initialization():
+    with pytest.raises(TypeError):
+        zlib_ng._GzipReader(object())
+    with pytest.raises(ValueError):
+        zlib_ng._ZlibDecompressor(wbits=100)
+
+
+@pytest.mark.skipif(not sysconfig.get_config_var("Py_GIL_DISABLED"),
+                    reason="Needs a free-threaded interpreter")
+def test_import_keeps_the_gil_disabled():
+    env = os.environ.copy()
+    env.pop("PYTHON_GIL", None)
+    subprocess.run([sys.executable, "-c", """
+import sys
+assert not sys._is_gil_enabled()
+from zlib_ng import zlib_ng
+assert not sys._is_gil_enabled()
+assert zlib_ng.decompress(zlib_ng.compress(b'test')) == b'test'
+"""], check=True, env=env)
+
+
+def _traced_peak(operation):
+    """Return the result of operation() and the traced memory it peaked at."""
+    tracemalloc = pytest.importorskip("tracemalloc")
+    gc.collect()
+    tracing = tracemalloc.is_tracing()
+    if not tracing:
+        tracemalloc.start()
+    try:
+        before, _ = tracemalloc.get_traced_memory()
+        tracemalloc.reset_peak()
+        result = operation()
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        if not tracing:
+            tracemalloc.stop()
+    return result, peak - before
+
+
+# 1 MiB + 137 stays below the 16 MiB initial-allocation cap, so the output
+# limit is allocated at once and a filled result can be returned as is.
+FILLED_SIZE = 1024 * 1024 + 137
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs CPython tracemalloc allocation accounting")
+def test_filled_bounded_decompressor_output_is_not_copied():
+    data = (b"filled buffer" * (FILLED_SIZE // 13 + 1))[:FILLED_SIZE]
+    packed = zlib.compress(data)
+    decoder = zlib_ng._ZlibDecompressor()
+    output, peak = _traced_peak(
+        lambda: decoder.decompress(packed, max_length=len(data)))
+    assert output == data
+    # Codec state fits well within this margin; a second output copy does not.
+    assert peak < len(data) * 3 // 2
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs CPython tracemalloc allocation accounting")
+def test_filled_gzip_reader_chunk_is_not_copied():
+    data = (b"filled buffer" * (FILLED_SIZE // 13 + 1))[:FILLED_SIZE]
+    # read() fills at most 10 * buffersize bytes per call.
+    reader = zlib_ng._GzipReader(io.BytesIO(gzip.compress(data)),
+                                 len(data) // 10 + 1)
+    output, peak = _traced_peak(lambda: reader.read(len(data)))
+    assert output == data
+    assert peak < len(data) * 3 // 2
+
+
+def _uses_limited_api():
+    # POSIX: zlib_ng.abi3.so. Windows names a stable ABI module zlib_ng.pyd
+    # and a version-specific one zlib_ng.cp314t-win_amd64.pyd.
+    suffix = os.path.basename(zlib_ng.__file__).split(".")[1]
+    return suffix in ("abi3", "pyd")
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs CPython tracemalloc allocation accounting")
+def test_full_api_codec_state_uses_the_raw_python_allocator():
+    if _uses_limited_api():
+        pytest.skip("Limited API 3.11 builds allocate codec state with "
+                    "malloc; PyMem_RawMalloc needs the 3.13 stable ABI")
+    # Deflate state is about 256 KiB at the default memory level.
+    compressor, peak = _traced_peak(zlib_ng.compressobj)
+    assert peak > 100 * 1024
+
+
+# Typed as Any so the type checker accepts the deliberately wrong arguments.
+NOT_AN_INTEGER: Any = "x"
+
+
+@pytest.mark.parametrize("call", [
+    lambda: zlib_ng.crc32_combine(NOT_AN_INTEGER, 1, 1),
+    lambda: zlib_ng._ParallelCompress(NOT_AN_INTEGER, -1),
+    # A bad first seek argument would leave the offset unset; use whence.
+    lambda: zlib_ng._GzipReader(io.BytesIO(gzip.compress(b"x"))).seek(
+        0, NOT_AN_INTEGER),
+    lambda: zlib_ng._GzipReader(io.BytesIO(gzip.compress(b"x"))).read(
+        NOT_AN_INTEGER),
+])
+def test_argument_parsing_failure_raises_type_error(call):
+    with pytest.raises(TypeError):
+        call()
+
+
+def test_extension_types_report_this_module():
+    types = [value for value in vars(zlib_ng).values()
+             if isinstance(value, type)]
+    types += [type(zlib_ng.compressobj()), type(zlib_ng.decompressobj())]
+    assert len(types) >= 7
+    for cls in types:
+        assert cls.__module__.split(".")[0] == "zlib_ng", cls
+
+
+def test_gzip_reader_propagates_read_lookup_errors():
+    class Unreadable:
+        @property
+        def read(self):
+            raise MemoryError("lookup failed")
+
+    with pytest.raises(MemoryError, match="lookup failed"):
+        zlib_ng._GzipReader(Unreadable())
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs _testcapi.set_nomemory")
+def test_module_initialization_failure_reports_its_error():
+    pytest.importorskip("_testcapi")
+    # _imp.create_dynamic() runs the module initialization again without the
+    # import system's module locks, which CPython 3.13 cannot allocate safely
+    # under set_nomemory.
+    code = """
+import _imp
+import importlib.util
+import _testcapi
+import zlib_ng.zlib_ng
+spec = importlib.util.find_spec("zlib_ng.zlib_ng")
+def initialize(start):
+    _testcapi.set_nomemory(start, start + 1)
+    try:
+        _imp.create_dynamic(spec)
+    except Exception as error:
+        return error
+    finally:
+        _testcapi.remove_mem_hooks()
+    return None
+failures = successes = start = 0
+while successes < 50:
+    error = initialize(start)
+    if error is None:
+        successes += 1
+    else:
+        successes = 0
+        failures += 1
+        if isinstance(error, SystemError):
+            # CPython 3.14 can fail heap-type creation without an exception.
+            # Initialization must never leave an unreported exception.
+            assert "without raising" in str(error), (start, error)
+        else:
+            assert isinstance(error, MemoryError), (start, error)
+    start += 1
+assert failures
+module = _imp.create_dynamic(spec)
+assert module.decompress(module.compress(b"test")) == b"test"
+"""
+    result = subprocess.run([sys.executable, "-c", code],
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("cls", [zlib_ng._ZlibDecompressor,
+                                 zlib_ng._GzipReader,
+                                 zlib_ng._ParallelCompress])
+def test_constructible_types_keep_their_docstrings(cls):
+    assert cls.__doc__
+
+
+ALLOCATION_FAILURE_OPERATIONS = {
+    # name: (operation, its output decoded by the standard library)
+    "decompress": ("zlib_ng.decompress(packed)", "result"),
+    "compressobj": ("stream_compress()", "zlib.decompress(result)"),
+    "decompressobj": ("stream_decompress()", "result"),
+    "_ZlibDecompressor": ("zlib_ng._ZlibDecompressor().decompress(packed)",
+                          "result"),
+    "_GzipReader.read": ("zlib_ng._GzipReader(io.BytesIO(gzipped))"
+                         ".read(len(data))", "result"),
+    "_GzipReader.readall": ("zlib_ng._GzipReader(io.BytesIO(gzipped))"
+                            ".readall()", "result"),
+}
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs _testcapi.set_nomemory")
+@pytest.mark.parametrize("name", ALLOCATION_FAILURE_OPERATIONS)
+def test_output_allocation_failure_cleanup(name):
+    pytest.importorskip("_testcapi")
+    operation, decode = ALLOCATION_FAILURE_OPERATIONS[name]
+    code = f"""
+import gc
+import gzip
+import io
+import random
+import tracemalloc
+import zlib
+import _testcapi
+from zlib_ng import zlib_ng
+data = random.Random(240).randbytes(256 * 1024)
+packed = zlib.compress(data)
+gzipped = gzip.compress(data)
+def stream_compress():
+    obj = zlib_ng.compressobj()
+    return obj.compress(data) + obj.flush()
+def stream_decompress():
+    obj = zlib_ng.decompressobj()
+    return obj.decompress(packed) + obj.flush()
+def operation():
+    return {operation}
+def decode(result):
+    return {decode}
+def fail_each_allocation():
+    failures = successes = start = 0
+    # Fail one allocation at a time until the operation no longer reaches
+    # the failing allocation.
+    while successes < 20:
+        _testcapi.set_nomemory(start, start + 1)
+        try:
+            result = operation()
+        except MemoryError:
+            failures += 1
+            successes = 0
+        except zlib_ng.error as error:
+            # zlib-ng reports a failed state allocation as Z_MEM_ERROR (-4).
+            assert "Error -4" in str(error), (start, error)
+            failures += 1
+            successes = 0
+        else:
+            _testcapi.remove_mem_hooks()
+            assert decode(result) == data, start
+            successes += 1
+        finally:
+            _testcapi.remove_mem_hooks()
+        start += 1
+    assert failures
+# The first pass fills caches that would otherwise look like leaks.
+fail_each_allocation()
+tracemalloc.start()
+fail_each_allocation()
+gc.collect()
+retained = tracemalloc.get_traced_memory()[0]
+tracemalloc.stop()
+# A single leaked output buffer is at least 16 KiB.
+assert retained < 8 * 1024, retained
+# A clean call after all failure paths still produces valid output.
+assert decode(operation()) == data
+"""
+    result = subprocess.run([sys.executable, "-c", code],
+                            capture_output=True, text=True, timeout=120)
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("name,factory", [("_Compress", "compressobj"),
+                                          ("_Decompress", "decompressobj")])
+def test_factory_retains_type_after_module_attribute_is_deleted(name, factory):
+    # The module state owns the factory types; no test-side strong reference
+    # may keep the type alive.
+    code = f"""
+import gc
+import weakref
+from zlib_ng import zlib_ng
+reference = weakref.ref(getattr(zlib_ng, {name!r}))
+delattr(zlib_ng, {name!r})
+gc.collect()
+obj = getattr(zlib_ng, {factory!r})()
+assert type(obj) is reference()
+"""
+    result = subprocess.run([sys.executable, "-c", code],
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("size", [1, 65536, 65537])
+@pytest.mark.parametrize("buffer_type", [
+    bytearray, lambda size: memoryview(bytearray(size))])
+def test_gzip_reader_readinto(size, buffer_type):
+    data = (bytes(range(256)) * (size // 256 + 1))[:size]
+    reader = zlib_ng._GzipReader(io.BytesIO(gzip.compress(data)))
+    buffer = buffer_type(65536)
+    first = reader.readinto(buffer)
+    # Exact for a full buffer, short at the end of the stream.
+    assert first == min(size, 65536)
+    output = [bytes(buffer[:first])]
+    while True:
+        written = reader.readinto(buffer)
+        if written == 0:
+            break
+        output.append(bytes(buffer[:written]))
+    assert b"".join(output) == data
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs CPython tracemalloc allocation accounting")
+@pytest.mark.parametrize("decompress", [
+    zlib_ng.decompress,
+    lambda packed: zlib_ng.decompressobj().decompress(packed)])
+def test_stream_end_at_full_output_does_not_grow(decompress):
+    # The first output allocation is 16 KiB. A stream that ends exactly there
+    # must leave the loop instead of growing the output once more, so it
+    # peaks no higher than a stream one byte shorter.
+    peaks = []
+    for size in (16383, 16384):
+        data = (bytes(range(256)) * 64)[:size]
+        packed = zlib.compress(data)
+        output, peak = _traced_peak(lambda: decompress(packed))
+        assert output == data
+        peaks.append(peak)
+    assert peaks[1] - peaks[0] < 4096, peaks
+
+
+def test_zlib_decompressor_uses_or_requests_the_preset_dictionary():
+    dictionary = b"preset dictionary " * 64
+    data = dictionary + b"payload"
+    packer = zlib.compressobj(zdict=dictionary)
+    packed = packer.compress(data) + packer.flush()
+    decompressor = zlib_ng._ZlibDecompressor(zdict=dictionary)
+    assert decompressor.decompress(packed) == data
+    assert decompressor.eof
+    # The dictionary is applied before any output; a zero output limit
+    # keeps the input for the next call.
+    decompressor = zlib_ng._ZlibDecompressor(zdict=dictionary)
+    assert decompressor.decompress(packed, 0) == b""
+    assert decompressor.decompress(b"") == data
+    assert decompressor.eof
+    with pytest.raises(zlib_ng.error):
+        zlib_ng._ZlibDecompressor().decompress(packed)
+
+
+ERROR_DATA = os.urandom(1024 * 1024)
+ZLIB_DATA = zlib.compress(ERROR_DATA)
+GZIP_DATA = gzip.compress(ERROR_DATA)
+
+
+def corrupt_last_byte(data):
+    return data[:-1] + bytes([data[-1] ^ 0xFF])
+
+
+def read_until_error(reader):
+    # read() returns what it decoded before the truncation; the next call
+    # raises.
+    while reader.read(len(ERROR_DATA) + 1):
+        pass
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs CPython tracemalloc allocation accounting")
+@pytest.mark.parametrize("operation,error", [
+    (lambda: zlib_ng.decompress(ZLIB_DATA[:-1]), zlib_ng.error),
+    (lambda: zlib_ng.decompressobj().decompress(
+        corrupt_last_byte(ZLIB_DATA)), zlib_ng.error),
+    (lambda: zlib_ng._ZlibDecompressor().decompress(
+        corrupt_last_byte(ZLIB_DATA)), zlib_ng.error),
+    (lambda: read_until_error(
+        zlib_ng._GzipReader(io.BytesIO(GZIP_DATA[:-1]))), EOFError),
+    (lambda: zlib_ng._GzipReader(io.BytesIO(GZIP_DATA[:-1])).readall(),
+     EOFError),
+], ids=["decompress", "decompressobj", "_ZlibDecompressor",
+        "_GzipReader.read", "_GzipReader.readall"])
+def test_invalid_input_releases_output(operation, error):
+    import tracemalloc
+
+    def fail_repeatedly():
+        for _ in range(10):
+            with pytest.raises(error):
+                operation()
+
+    # The first pass fills caches that would otherwise look like leaks.
+    fail_repeatedly()
+    gc.collect()
+    tracing = tracemalloc.is_tracing()
+    if not tracing:
+        tracemalloc.start()
+    before, _ = tracemalloc.get_traced_memory()
+    try:
+        fail_repeatedly()
+        gc.collect()
+        retained = tracemalloc.get_traced_memory()[0] - before
+    finally:
+        if not tracing:
+            tracemalloc.stop()
+    # The output grew past 256 KiB before each error.
+    assert retained < 64 * 1024
+
+
+@pytest.mark.parametrize("buffer", [b"abc", memoryview(b"abc"), "abc"])
+def test_gzip_reader_readinto_rejects_read_only_buffers(buffer):
+    reader = zlib_ng._GzipReader(io.BytesIO(gzip.compress(b"data")))
+    with pytest.raises(TypeError, match="read-write bytes-like object"):
+        reader.readinto(buffer)

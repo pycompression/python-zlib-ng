@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import sys
+import sysconfig
 import tempfile
 from pathlib import Path
 
@@ -31,9 +32,21 @@ BUILD_CACHE = os.environ.get("PYTHON_ZLIB_NG_BUILD_CACHE")
 BUILD_CACHE_FILE = Path(os.environ.get("PYTHON_ZLIB_NG_BUILD_CACHE_FILE",
                                        DEFAULT_CACHE_FILE))
 
+USE_LIMITED_API = (sys.implementation.name == "cpython" and
+                   not sysconfig.get_config_var("Py_GIL_DISABLED"))
+
+EXTENSION_MACROS = []
+if USE_LIMITED_API:
+    EXTENSION_MACROS.append(("Py_LIMITED_API", "0x030B0000"))
+elif sysconfig.get_config_var("Py_GIL_DISABLED"):
+    # Windows headers need the build's free-threading flag explicitly.
+    EXTENSION_MACROS.append(("Py_GIL_DISABLED", "1"))
+
 EXTENSIONS = [
-        Extension("zlib_ng.zlib_ng", ["src/zlib_ng/zlib_ngmodule.c"]),
-    ]
+    Extension("zlib_ng.zlib_ng", ["src/zlib_ng/zlib_ngmodule.c"],
+              define_macros=EXTENSION_MACROS,
+              py_limited_api=USE_LIMITED_API),
+]
 
 
 class BuildZlibNGExt(build_ext):
@@ -121,5 +134,7 @@ def build_zlib_ng():
 
 setup(
     cmdclass={"build_ext": BuildZlibNGExt},
-    ext_modules=EXTENSIONS
+    ext_modules=EXTENSIONS,
+    options={"bdist_wheel": {"py_limited_api": "cp311"}}
+    if USE_LIMITED_API else {},
 )
