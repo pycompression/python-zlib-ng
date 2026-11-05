@@ -380,3 +380,22 @@ def test_gzip_reader_readinto(size, buffer_type):
             break
         output.append(bytes(buffer[:written]))
     assert b"".join(output) == data
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs CPython tracemalloc allocation accounting")
+@pytest.mark.parametrize("decompress", [
+    zlib_ng.decompress,
+    lambda packed: zlib_ng.decompressobj().decompress(packed)])
+def test_stream_end_at_full_output_does_not_grow(decompress):
+    # The first output allocation is 16 KiB. A stream that ends exactly there
+    # must leave the loop instead of growing the output once more, so it
+    # peaks no higher than a stream one byte shorter.
+    peaks = []
+    for size in (16383, 16384):
+        data = (bytes(range(256)) * 64)[:size]
+        packed = zlib.compress(data)
+        output, peak = _traced_peak(lambda: decompress(packed))
+        assert output == data
+        peaks.append(peak)
+    assert peaks[1] - peaks[0] < 4096, peaks
