@@ -414,3 +414,15 @@ def test_stream_end_at_full_output_does_not_grow(decompress):
         assert output == data
         peaks.append(peak)
     assert peaks[1] - peaks[0] < 4096, peaks
+
+
+def test_zlib_decompressor_uses_or_requests_the_preset_dictionary():
+    dictionary = b"preset dictionary " * 64
+    data = dictionary + b"payload"
+    packer = zlib.compressobj(zdict=dictionary)
+    packed = packer.compress(data) + packer.flush()
+    decompressor = zlib_ng._ZlibDecompressor(zdict=dictionary)
+    assert decompressor.decompress(packed) == data
+    assert decompressor.eof
+    with pytest.raises(zlib_ng.error):
+        zlib_ng._ZlibDecompressor().decompress(packed)

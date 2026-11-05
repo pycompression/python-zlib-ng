@@ -1316,13 +1316,17 @@ decompress_buf(ZlibDecompressor *self, Py_ssize_t max_length)
             case Z_STREAM_END:
                 break;
             default:
-                if (err == Z_NEED_DICT) {
-                    goto error;
+                if (err == Z_NEED_DICT && self->zdict != NULL) {
+                    if (set_inflate_zdict_ZlibDecompressor(self) < 0) {
+                        goto error;
+                    }
+                    break;
                 }
                 /* Report the error below without feeding more input. */
                 goto input_left;
             }
-        } while (self->zst.avail_out == 0 && err != Z_STREAM_END);
+        } while ((self->zst.avail_out == 0 || err == Z_NEED_DICT) &&
+                 err != Z_STREAM_END);
     } while(err != Z_STREAM_END && self->avail_in_real != 0);
 
 input_left:
