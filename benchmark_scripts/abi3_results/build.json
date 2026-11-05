@@ -1,6 +1,6 @@
 {
   "baseline_commit": "39cec01898a4a44ac988a40e98fd8d8cbbcaacd9",
-  "candidate_c_source_sha256": "cb8fd4d7a3f6a903dcbe0f614b4269102c9b8bb607b538b4953372bf13aee305",
+  "candidate_c_source_sha256": "a8ad2f866f803ea1d5eaee2f873f521cab800e64a4bb855dab64b3b76624c9c3",
   "native_commit": "12731092979c6d07f42da27da673a9f6c7b13586",
   "native_version": "zlib-ng 2.3.3",
   "native_archive_sha256": "4607e64aa8eede07bc8de9ae0775f76d6d35dc799231cf7b4f11eb64884f1819",
@@ -18,8 +18,8 @@
   "rounds": 9,
   "case_count": 128,
   "sample_target_ms": 20,
-  "control_p95_absolute_delta": 0.047808642851965816,
-  "control_max_absolute_delta": 0.09892143410936849,
+  "control_p95_absolute_delta": 0.0382958322015444,
+  "control_max_absolute_delta": 0.09626118033230013,
   "wheel_version_note": "Both development wheels use SETUPTOOLS_SCM_PRETEND_VERSION=1.1.1.dev0 because isolated source copies have no .git metadata.",
   "wheels": {
     "baseline": {
@@ -29,25 +29,25 @@
     },
     "candidate": {
       "filename": "zlib_ng-1.1.1.dev0-cp311-abi3-linux_x86_64.whl",
-      "sha256": "2b2915356da4731c0fa1152c57696d796556f44092c64db811a5af7c4b7e49e8",
-      "extension_sha256": "b1bcf1d66fe0425e1ad8ab43e59707f60d85d00fe69ca916483872547cbd4dc7"
+      "sha256": "3e95e585081a7a039e7fc7d3ece47412a3160ca84fb7e80d52253424a82172fa",
+      "extension_sha256": "57594ecec05451c27be875f0b051f4141cd5c86a9e65d22d3af91c30f049da35"
     },
     "free-threaded": {
-      "filename": "zlib_ng-1.1.1.dev0-cp313-cp313t-linux_x86_64.whl",
-      "sha256": "8be98983c38ac25ae0d76da5814e0c7fad297db0905870d519dedaf73d131078",
-      "extension_sha256": "b13425086ee6fb7cd2a6b1809a82b8c0abc07de2f69c2e7c8cd2d453af16242c"
+      "filename": "zlib_ng-0.1.dev329+g936ab8f5d-cp313-cp313t-linux_x86_64.whl",
+      "sha256": "4fccb330972d37145ff9647e2a0df9af1cad957772bf0d2c4de109d0000e629c",
+      "extension_sha256": "aa3b506f82ba64cb545c49140f06cfe97665b0aa046dc7026560b771428d41ed"
     },
     "pypy": {
-      "filename": "zlib_ng-1.1.1.dev0-pp311-pypy311_pp80-linux_x86_64.whl",
-      "sha256": "1ad9a3cf00bd83142cb9bb2fe2ddc466c5954460240e4107e3146e280a0d5870",
-      "extension_sha256": "dea6b76ba7da8b81b2e768fab347d5d3a01f9d9ddd47f51b7018ea12878c0dba"
+      "filename": "zlib_ng-0.1.dev329+g936ab8f5d-pp311-pypy311_pp80-linux_x86_64.whl",
+      "sha256": "0b314c52efcc152649e8dab014bddbfe29adcfa7baa214eca20aa3d6c2bcb1fe",
+      "extension_sha256": "c6873f8fa1817afcd3468f3dbfdccb0a4a002f0f3bb181adb037d56e5a098509"
     }
   },
   "validation": {
-    "same_abi3_wheel": "Built with Py_LIMITED_API=0x030B0000; abi3audit --strict: 0 violations, computed baseline 3.11. The same wheel installed on CPython 3.11.15, 3.12.14, 3.13.12, 3.14.4, 3.15.0a8 (alpha) and 3.15.0: smoke checks with stdlib oracles pass on all six; tests/test_stable_abi.py 44 passed, 10 skipped (no _testcapi), and 52 passed, 2 skipped on 3.14.4",
-    "CPython_full_suite": "CPython 3.14.4, PYTHONDEVMODE=1, installed wheel, including both standard-library compliance files: 14617 passed, 4 skipped (compliance alone: 138 passed, 2 skipped)",
-    "PyPy_full_suite": "PyPy 3.11.17 (PyPy 8.0.1), including compliance and static-type immutability checks: 14594 passed, 27 skipped",
-    "free_threaded_full_suite": "free-threaded CPython 3.13.11 (uv build), cp313t full-API wheel, PYTHON_GIL unset, GIL stays off after import, including compliance: 14611 passed, 10 skipped (8 need _testcapi, 1 bigmem 4 GiB, 1 needs sys.gettotalrefcount)",
+    "same_abi3_wheel": "Built with Py_LIMITED_API=0x030B0000; abi3audit --strict: 0 violations, computed baseline 3.11. The same wheel installed on CPython 3.11.15, 3.12.14, 3.13.12, 3.14.4, 3.15.0a8 (alpha) and 3.15.0: smoke checks with stdlib oracles pass on all six; tests/test_stable_abi.py 52 passed, 10 skipped (no _testcapi), and 60 passed, 2 skipped on 3.14.4",
+    "CPython_full_suite": "CPython 3.14.4, PYTHONDEVMODE=1, installed wheel, including both standard-library compliance files: 14625 passed, 4 skipped (compliance alone: 138 passed, 2 skipped)",
+    "PyPy_full_suite": "PyPy 3.11.17 (PyPy 8.0.1), including compliance and static-type immutability checks: 14597 passed, 32 skipped",
+    "free_threaded_full_suite": "free-threaded CPython 3.13.11 (uv build), cp313t full-API wheel, PYTHON_GIL unset, GIL stays off after import, including compliance: 14619 passed, 10 skipped (8 need _testcapi, 1 bigmem 4 GiB, 1 needs sys.gettotalrefcount)",
     "free_threaded_import": "test_import_keeps_the_gil_disabled: a fresh process with PYTHON_GIL unset and no -X gil option keeps the GIL disabled after import",
     "lint": "flake8, mypy (17 files), actionlint, git diff --check, strict Sphinx and twine check pass",
     "reference_replacement": "Assignment-before-DECREF ordering matches the original Py_SETREF/Py_XSETREF semantics"
@@ -61,13 +61,13 @@
   "harness_sha256": "84e289a2d1c29275fedf74c7d637005ac2e0e2cb3ca75d82dbc9a5d6a3bc982f",
   "benchmark": {
     "results.json": {
-      "started": "2026-11-05T08:47:21+02:00",
-      "finished": "2026-11-05T08:49:39+02:00"
+      "started": "2026-11-05T11:04:20+02:00",
+      "finished": "2026-11-05T11:06:36+02:00"
     },
     "repair-check.json": {
       "description": "Earlier candidate (6488941 wheel c0cb4b75...) as baseline/control against this candidate, same protocol.",
-      "control_p95_inclusive": 0.04009275869500182,
-      "control_max": 0.16555229719307185
+      "control_p95_inclusive": 0.04262142134103696,
+      "control_max": 0.08182621891717956
     },
     "machine_note": "Desktop processes (remote-desktop service, browser) were running; no build, test or other benchmark ran."
   }
