@@ -8,6 +8,7 @@ import subprocess
 import sys
 import sysconfig
 import zlib
+from typing import Any
 
 import pytest
 
@@ -196,12 +197,18 @@ def test_full_api_codec_state_uses_the_raw_python_allocator():
     assert peak > 100 * 1024
 
 
+# Typed as Any so the type checker accepts the deliberately wrong arguments.
+NOT_AN_INTEGER: Any = "x"
+
+
 @pytest.mark.parametrize("call", [
-    lambda: zlib_ng.crc32_combine("x", 1, 1),
-    lambda: zlib_ng._ParallelCompress("x"),
+    lambda: zlib_ng.crc32_combine(NOT_AN_INTEGER, 1, 1),
+    lambda: zlib_ng._ParallelCompress(NOT_AN_INTEGER, -1),
     # A bad first seek argument would leave the offset unset; use whence.
-    lambda: zlib_ng._GzipReader(io.BytesIO(gzip.compress(b"x"))).seek(0, "x"),
-    lambda: zlib_ng._GzipReader(io.BytesIO(gzip.compress(b"x"))).read("x"),
+    lambda: zlib_ng._GzipReader(io.BytesIO(gzip.compress(b"x"))).seek(
+        0, NOT_AN_INTEGER),
+    lambda: zlib_ng._GzipReader(io.BytesIO(gzip.compress(b"x"))).read(
+        NOT_AN_INTEGER),
 ])
 def test_argument_parsing_failure_raises_type_error(call):
     with pytest.raises(TypeError):
