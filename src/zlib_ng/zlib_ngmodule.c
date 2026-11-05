@@ -2501,6 +2501,16 @@ GzipReader__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         );
         return NULL;
     }
+    /* PyObject_HasAttrString() would hide errors other than a missing
+       attribute, such as MemoryError, and treat fp as a buffer. */
+    PyObject *read_method = PyObject_GetAttrString(fp, "read");
+    if (read_method == NULL) {
+        if (!PyErr_ExceptionMatches(PyExc_AttributeError))
+            return NULL;
+        PyErr_Clear();
+    }
+    int is_file = read_method != NULL;
+    Py_XDECREF(read_method);
     GzipReader *self = PyObject_New(GzipReader, type);
     if (self == NULL)
         return NULL;
@@ -2509,7 +2519,7 @@ GzipReader__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     self->input_buffer = NULL;
     self->lock = NULL;
     self->zst.state = NULL;
-    if (PyObject_HasAttrString(fp, "read")) {
+    if (is_file) {
         self->memview = NULL;
         self->buffer_size = buffer_size;
         self->input_buffer = PyMem_Malloc(self->buffer_size);

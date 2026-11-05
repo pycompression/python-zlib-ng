@@ -197,3 +197,13 @@ def test_extension_types_report_this_module():
     assert len(types) >= 7
     for cls in types:
         assert cls.__module__.split(".")[0] == "zlib_ng", cls
+
+
+def test_gzip_reader_propagates_read_lookup_errors():
+    class Unreadable:
+        @property
+        def read(self):
+            raise MemoryError("lookup failed")
+
+    with pytest.raises(MemoryError, match="lookup failed"):
+        zlib_ng._GzipReader(Unreadable())
