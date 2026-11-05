@@ -168,20 +168,33 @@ newcompobject(PyTypeObject *type)
     return self;
 }
 
+/* zlib-ng calls these callbacks without an attached thread state.
+   PyMem_RawMalloc() is valid there and visible to tracemalloc, but the stable
+   ABI provides it only from 3.13, so 3.11 stable ABI builds use the C library
+   allocator. Each zng_stream is allocated and freed by the same build, so the
+   two families never mix. */
+#if defined(Py_LIMITED_API) && Py_LIMITED_API+0 < 0x030D0000
+#define CODEC_MALLOC malloc
+#define CODEC_FREE free
+#else
+#define CODEC_MALLOC PyMem_RawMalloc
+#define CODEC_FREE PyMem_RawFree
+#endif
+
 static void*
 PyZlib_Malloc(voidpf ctx, uInt items, uInt size)
 {
     if (size != 0 && items > (size_t)PY_SSIZE_T_MAX / size)
         return NULL;
-    /* These callbacks run without the GIL; the raw PyMem API needs ABI 3.13. */
     size_t length = (size_t)items * (size_t)size;
-    return malloc(length ? length : 1);
+    /* malloc(0) may return NULL, which zlib-ng would report as Z_MEM_ERROR. */
+    return CODEC_MALLOC(length ? length : 1);
 }
 
 static void
 PyZlib_Free(voidpf ctx, void *ptr)
 {
-    free(ptr);
+    CODEC_FREE(ptr);
 }
 
 static void

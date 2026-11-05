@@ -178,6 +178,24 @@ def test_filled_gzip_reader_chunk_is_not_copied():
     assert peak < len(data) * 3 // 2
 
 
+def _uses_limited_api():
+    # POSIX: zlib_ng.abi3.so. Windows names a stable ABI module zlib_ng.pyd
+    # and a version-specific one zlib_ng.cp314t-win_amd64.pyd.
+    suffix = os.path.basename(zlib_ng.__file__).split(".")[1]
+    return suffix in ("abi3", "pyd")
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs CPython tracemalloc allocation accounting")
+def test_full_api_codec_state_uses_the_raw_python_allocator():
+    if _uses_limited_api():
+        pytest.skip("Limited API 3.11 builds allocate codec state with "
+                    "malloc; PyMem_RawMalloc needs the 3.13 stable ABI")
+    # Deflate state is about 256 KiB at the default memory level.
+    compressor, peak = _traced_peak(zlib_ng.compressobj)
+    assert peak > 100 * 1024
+
+
 @pytest.mark.parametrize("call", [
     lambda: zlib_ng.crc32_combine("x", 1, 1),
     lambda: zlib_ng._ParallelCompress("x"),
