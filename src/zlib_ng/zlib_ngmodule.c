@@ -3264,25 +3264,61 @@ static struct PyModuleDef zlibmodule = {
     .m_free = zlib_free,
 };
 
+#define INT_CONSTANT(name) {#name, name}
+static const struct {
+    const char *name;
+    long value;
+} zlib_int_constants[] = {
+    INT_CONSTANT(MAX_WBITS),
+    INT_CONSTANT(DEFLATED),
+    INT_CONSTANT(DEF_MEM_LEVEL),
+    INT_CONSTANT(DEF_BUF_SIZE),
+    // compression levels
+    INT_CONSTANT(Z_NO_COMPRESSION),
+    INT_CONSTANT(Z_BEST_SPEED),
+    INT_CONSTANT(Z_BEST_COMPRESSION),
+    INT_CONSTANT(Z_DEFAULT_COMPRESSION),
+    // compression strategies
+    INT_CONSTANT(Z_FILTERED),
+    INT_CONSTANT(Z_HUFFMAN_ONLY),
+    INT_CONSTANT(Z_RLE),
+    INT_CONSTANT(Z_FIXED),
+    INT_CONSTANT(Z_DEFAULT_STRATEGY),
+    // allowed flush values
+    INT_CONSTANT(Z_NO_FLUSH),
+    INT_CONSTANT(Z_PARTIAL_FLUSH),
+    INT_CONSTANT(Z_SYNC_FLUSH),
+    INT_CONSTANT(Z_FULL_FLUSH),
+    INT_CONSTANT(Z_FINISH),
+    INT_CONSTANT(Z_BLOCK),
+    INT_CONSTANT(Z_TREES),
+};
+#undef INT_CONSTANT
+
 PyMODINIT_FUNC
 PyInit_zlib_ng(void)
 {
+    PyObject *gzip_module = NULL;
     PyObject *m = PyModule_Create(&zlibmodule);
     if (m == NULL) {
         return NULL;
     }
 #ifdef Py_GIL_DISABLED
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+    if (PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED) < 0) {
+        goto error;
+    }
 #endif
 
     zlib_state *state = PyModule_GetState(m);
     state->compress_type = create_extension_type(&Comptype_spec);
+    if (state->compress_type == NULL ||
+        PyModule_AddObjectRef(m, "_Compress", state->compress_type) < 0) {
+        goto error;
+    }
     state->decompress_type = create_extension_type(&Decomptype_spec);
-    if (state->compress_type == NULL || state->decompress_type == NULL ||
-        PyModule_AddObjectRef(m, "_Compress", state->compress_type) < 0 ||
+    if (state->decompress_type == NULL ||
         PyModule_AddObjectRef(m, "_Decompress", state->decompress_type) < 0) {
-        Py_DECREF(m);
-        return NULL;
+        goto error;
     }
     TypeDefinition *specs[] = {&ZlibDecompressorType_spec, &GzipReader_Type_spec,
                             &ParallelCompress_Type_spec};
@@ -3290,75 +3326,54 @@ PyInit_zlib_ng(void)
     for (size_t i = 0; i < sizeof(specs) / sizeof(specs[0]); ++i) {
         PyObject *type = create_extension_type(specs[i]);
         if (type == NULL) {
-            Py_DECREF(m);
-            return NULL;
+            goto error;
         }
         int result = PyModule_AddObjectRef(m, names[i], type);
         Py_DECREF(type);
         if (result < 0) {
-            Py_DECREF(m);
-            return NULL;
+            goto error;
         }
     }
 
     ZlibError = PyErr_NewException("zlib_ng.error", NULL, NULL);
-    if (ZlibError == NULL) {
-        return NULL; 
-    } 
-    Py_INCREF(ZlibError);
-    PyModule_AddObject(m, "error", ZlibError);
+    if (ZlibError == NULL ||
+        PyModule_AddObjectRef(m, "error", ZlibError) < 0) {
+        goto error;
+    }
 
-    PyObject *gzip_module = PyImport_ImportModule("gzip");
+    gzip_module = PyImport_ImportModule("gzip");
     if (gzip_module == NULL) {
-        return NULL;
+        goto error;
     }
 
     BadGzipFile = PyObject_GetAttrString(gzip_module, "BadGzipFile");
     if (BadGzipFile == NULL) {
-        return NULL;
+        goto error;
     }
     Py_INCREF(BadGzipFile);
+    Py_CLEAR(gzip_module);
 
-    PyModule_AddIntMacro(m, MAX_WBITS);
-    PyModule_AddIntMacro(m, DEFLATED);
-    PyModule_AddIntMacro(m, DEF_MEM_LEVEL);
-    PyModule_AddIntMacro(m, DEF_BUF_SIZE);
-    // compression levels
-    PyModule_AddIntMacro(m, Z_NO_COMPRESSION);
-    PyModule_AddIntMacro(m, Z_BEST_SPEED);
-    PyModule_AddIntMacro(m, Z_BEST_COMPRESSION);
-    PyModule_AddIntMacro(m, Z_DEFAULT_COMPRESSION);
-    // compression strategies
-    PyModule_AddIntMacro(m, Z_FILTERED);
-    PyModule_AddIntMacro(m, Z_HUFFMAN_ONLY);
-    PyModule_AddIntMacro(m, Z_RLE);
-    PyModule_AddIntMacro(m, Z_FIXED);
-    PyModule_AddIntMacro(m, Z_DEFAULT_STRATEGY);
-    // allowed flush values
-    PyModule_AddIntMacro(m, Z_NO_FLUSH);
-    PyModule_AddIntMacro(m, Z_PARTIAL_FLUSH);
-    PyModule_AddIntMacro(m, Z_SYNC_FLUSH);
-    PyModule_AddIntMacro(m, Z_FULL_FLUSH);
-    PyModule_AddIntMacro(m, Z_FINISH);
-    PyModule_AddIntMacro(m, Z_BLOCK);
-    PyModule_AddIntMacro(m, Z_TREES);
-    PyObject *ver = PyUnicode_FromString(ZLIBNG_VERSION);
-    if (ver != NULL)
-        PyModule_AddObject(m, "ZLIBNG_VERSION", ver);
-
-    ver = PyUnicode_FromString(zlibng_version());
-    if (ver != NULL)
-        PyModule_AddObject(m, "ZLIBNG_RUNTIME_VERSION", ver);
-
-    /* Add latest compatible zlib version */
-    ver = PyUnicode_FromString("1.2.12");
-    if (ver!= NULL) {
-        PyModule_AddObject(m, "ZLIB_VERSION", ver);
-        Py_INCREF(ver);
-        PyModule_AddObject(m, "ZLIB_RUNTIME_VERSION", ver);
+    for (size_t i = 0;
+         i < sizeof(zlib_int_constants) / sizeof(zlib_int_constants[0]); ++i) {
+        if (PyModule_AddIntConstant(m, zlib_int_constants[i].name,
+                                    zlib_int_constants[i].value) < 0) {
+            goto error;
+        }
+    }
+    if (PyModule_AddStringConstant(m, "ZLIBNG_VERSION", ZLIBNG_VERSION) < 0 ||
+        PyModule_AddStringConstant(m, "ZLIBNG_RUNTIME_VERSION",
+                                   zlibng_version()) < 0 ||
+        /* Add latest compatible zlib version */
+        PyModule_AddStringConstant(m, "ZLIB_VERSION", "1.2.12") < 0 ||
+        PyModule_AddStringConstant(m, "ZLIB_RUNTIME_VERSION", "1.2.12") < 0 ||
+        PyModule_AddStringConstant(m, "__version__", "1.0") < 0) {
+        goto error;
     }
 
-    PyModule_AddStringConstant(m, "__version__", "1.0");
-
     return m;
+
+error:
+    Py_XDECREF(gzip_module);
+    Py_DECREF(m);
+    return NULL;
 }

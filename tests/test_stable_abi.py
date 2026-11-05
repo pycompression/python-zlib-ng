@@ -207,3 +207,41 @@ def test_gzip_reader_propagates_read_lookup_errors():
 
     with pytest.raises(MemoryError, match="lookup failed"):
         zlib_ng._GzipReader(Unreadable())
+
+
+@pytest.mark.skipif(sys.implementation.name != "cpython",
+                    reason="Needs _testcapi.set_nomemory")
+def test_module_initialization_failure_reports_its_error():
+    pytest.importorskip("_testcapi")
+    code = """
+import importlib
+import sys
+import _testcapi
+import zlib_ng.zlib_ng
+failures = successes = 0
+start = 0
+# A module with state is initialized again on every import.
+while successes < 50:
+    sys.modules.pop("zlib_ng.zlib_ng", None)
+    _testcapi.set_nomemory(start, start + 1)
+    try:
+        importlib.import_module("zlib_ng.zlib_ng")
+    except MemoryError:
+        failures += 1
+        successes = 0
+    except SystemError as error:
+        # Some CPython versions fail type creation without an exception.
+        # Initialization must never leave an unreported exception behind.
+        assert "without raising" in str(error), (start, error)
+    else:
+        successes += 1
+    finally:
+        _testcapi.remove_mem_hooks()
+    start += 1
+assert failures
+module = importlib.import_module("zlib_ng.zlib_ng")
+assert module.decompress(module.compress(b"test")) == b"test"
+"""
+    result = subprocess.run([sys.executable, "-c", code],
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
