@@ -342,8 +342,8 @@ jobs:
         run: cibuildwheel --output-dir dist
         env:
           CIBW_ENABLE: "pypy"
-          # Skip 32 bit, macosx_arm64 causes issues on cpython 3.9
-          CIBW_SKIP: "*-win32 *-manylinux_i686 cp38-macosx_arm64 cp39-win_arm64 cp310-win_arm64"
+          # Skip 32 bit
+          CIBW_SKIP: "*-win32 *-manylinux_i686"
           CIBW_ARCHS_LINUX: ${{ matrix.cibw_archs_linux }}
           CIBW_TEST_REQUIRES: "pytest"
           # Simple tests that requires the project to be build correctly
@@ -351,15 +351,18 @@ jobs:
             pytest {project}/tests/test_zlib_compliance.py 
             {project}/tests/test_gzip_compliance.py
             {project}/tests/test_gzip_ng.py
+            {project}/tests/test_stable_abi.py
           CIBW_TEST_COMMAND_MACOS: >-
             pytest {project}/tests/test_zlib_compliance.py 
             {project}/tests/test_gzip_compliance.py
             {project}/tests/test_gzip_ng.py
+            {project}/tests/test_stable_abi.py
           # Windows does not have the test module in the included python.
           # Run compatibility tests instead.
           CIBW_TEST_COMMAND_WINDOWS: >-
             pytest {project}/tests/test_compat.py
             {project}/tests/test_gzip_ng.py
+            {project}/tests/test_stable_abi.py
           CIBW_ENVIRONMENT_LINUX: >-
             PYTHON_ZLIB_NG_BUILD_CACHE=True
             PYTHON_ZLIB_NG_BUILD_CACHE_FILE=/tmp/build_cache
